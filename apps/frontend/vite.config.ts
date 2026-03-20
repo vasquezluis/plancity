@@ -1,3 +1,5 @@
+import path from 'node:path';
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
 
@@ -9,11 +11,13 @@ export default defineConfig(({ mode }) => {
   const frontendPort = Number(env.FRONTEND_PORT ?? '3000');
 
   return {
-    plugins: [react()],
+    plugins: [react(), tailwindcss()],
+    resolve: {
+      alias: { '@': path.resolve(__dirname, './src') },
+    },
     server: {
       port: frontendPort,
       proxy: {
-        // Proxy API calls to the backend during development
         '/api': {
           target: `http://localhost:${backendPort}`,
           rewrite: (path) => path.replace(/^\/api/, ''),

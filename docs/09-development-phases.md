@@ -6,7 +6,7 @@
 - No implementation yet
 - Super simple frontend + backend
 
-## Phase 1 (MVP)
+## [✅] Phase 1 (MVP)
 
 - Draw walls
 - Extract coordinates
