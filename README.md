@@ -4,12 +4,11 @@ A tool that lets users sketch a floor plan, then automatically places outlets an
 
 ## Stack
 
-- **Frontend**: React 19 + Vite + TypeScript + TanStack Query
+- **Frontend**: React 19 + Vite + TypeScript
 - **Backend**: Node.js + Express + TypeScript
 - **Validation**: Zod
 - **Package manager**: pnpm (workspaces)
 - **Linting / Formatting**: Biome
-- **Git hooks**: Husky + lint-staged
 
 ## Project Structure
 
@@ -37,10 +36,10 @@ pnpm dev        # starts frontend + backend in parallel
 
 ## Scripts
 
-| Script          | Description                      |
-|-----------------|----------------------------------|
-| `pnpm dev`      | Start all apps in watch mode     |
-| `pnpm build`    | Build all apps                   |
-| `pnpm check`    | Biome lint + format (with fixes) |
-| `pnpm lint`     | Biome lint only                  |
-| `pnpm format`   | Biome format only                |
+| Script        | Description                      |
+| ------------- | -------------------------------- |
+| `pnpm dev`    | Start all apps in watch mode     |
+| `pnpm build`  | Build all apps                   |
+| `pnpm check`  | Biome lint + format (with fixes) |
+| `pnpm lint`   | Biome lint only                  |
+| `pnpm format` | Biome format only                |
