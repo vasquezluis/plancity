@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Zap } from 'lucide-react';
+import { Trash2, Zap } from 'lucide-react';
 import { DrawingCanvas } from './DrawingCanvas';
 import { useFloorPlan } from './useFloorPlan';
 
@@ -59,6 +59,7 @@ export function FloorPlanEditor() {
           {isPending ? 'Generating…' : 'Generate'}
         </Button>
         <Button className="cursor-pointer" variant="outline" onClick={handleClear}>
+          <Trash2 className="w-4 h-4" />
           Clear All
         </Button>
       </div>

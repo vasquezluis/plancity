@@ -3,7 +3,15 @@ import type { Point } from '../types';
 import { DrawingToolbar } from './DrawingToolbar';
 import { LayoutOverlay } from './LayoutOverlay';
 import type { DrawingCanvasProps } from './floor-plan.types';
-import { CANVAS_H, CANVAS_W, GRID, projectOntoWall, snap, svgPoint } from './floor-plan.utils';
+import {
+  CANVAS_H,
+  CANVAS_W,
+  GRID,
+  METERS_PER_CELL,
+  projectOntoWall,
+  snap,
+  svgPoint,
+} from './floor-plan.utils';
 
 export function DrawingCanvas({
   walls,
@@ -17,16 +25,45 @@ export function DrawingCanvas({
   const [hover, setHover] = useState<Point | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
-  // ── Grid lines ─────────────────────────────────────────────────────────────
+  // ── Grid lines & coordinate labels ─────────────────────────────────────────
+  // Each grid cell = METERS_PER_CELL meters. Labels appear on every cell line.
+  // Reason: GRID is now 40px so every-cell labeling is readable without clutter.
+  const toMeters = (px: number) => (px / GRID) * METERS_PER_CELL;
   const gridLines: React.ReactNode[] = [];
   for (let x = 0; x <= CANVAS_W; x += GRID) {
     gridLines.push(
       <line key={`v${x}`} x1={x} y1={0} x2={x} y2={CANVAS_H} stroke="#e5e7eb" strokeWidth={0.5} />
     );
+    gridLines.push(
+      <text
+        key={`lx${x}`}
+        x={x}
+        y={9}
+        fontSize={9}
+        fill="#9ca3af"
+        textAnchor="middle"
+        style={{ userSelect: 'none', pointerEvents: 'none' }}
+      >
+        {toMeters(x)}
+      </text>
+    );
   }
   for (let y = 0; y <= CANVAS_H; y += GRID) {
     gridLines.push(
       <line key={`h${y}`} x1={0} y1={y} x2={CANVAS_W} y2={y} stroke="#e5e7eb" strokeWidth={0.5} />
+    );
+    gridLines.push(
+      <text
+        key={`ly${y}`}
+        x={3}
+        y={y === 0 ? 9 : y + 3}
+        fontSize={9}
+        fill="#9ca3af"
+        textAnchor="start"
+        style={{ userSelect: 'none', pointerEvents: 'none' }}
+      >
+        {toMeters(y)}
+      </text>
     );
   }
 
@@ -128,28 +165,57 @@ export function DrawingCanvas({
         )}
 
         {doors.map((d) => (
-          <g key={`${d.x}-${d.y}`}>
-            <circle
-              cx={d.x}
-              cy={d.y}
-              r={8}
-              fill="#fbbf24"
-              stroke="#92400e"
+          // Architectural top-down door symbol centered at placement point.
+          // Hinge at (-10, 0), panel swings 90° upward, arc shows the sweep.
+          <g key={`${d.x}-${d.y}`} transform={`translate(${d.x}, ${d.y})`}>
+            {/* Swing area fill */}
+            <path d="M -10 0 L -10 -20 A 20 20 0 0 1 10 0 Z" fill="#fef3c7" opacity={0.55} />
+            {/* Swing arc (dashed) */}
+            <path
+              d="M -10 -20 A 20 20 0 0 1 10 0"
+              fill="none"
+              stroke="#f59e0b"
               strokeWidth={1.5}
-              opacity={0.85}
+              strokeDasharray="4 2"
             />
-            <text x={d.x - 5} y={d.y + 4} fontSize={10}>
-              🚪
-            </text>
+            {/* Door panel */}
+            <line
+              x1={-10}
+              y1={0}
+              x2={-10}
+              y2={-20}
+              stroke="#b45309"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+            />
+            {/* Door frame baseline */}
+            <line
+              x1={-13}
+              y1={0}
+              x2={13}
+              y2={0}
+              stroke="#b45309"
+              strokeWidth={2}
+              strokeLinecap="round"
+            />
+            {/* Hinge dot */}
+            <circle cx={-10} cy={0} r={2.5} fill="#b45309" />
           </g>
         ))}
 
         {result && <LayoutOverlay result={result} />}
       </svg>
 
-      <div className="flex gap-4 mt-1.5 text-[11px] text-muted-foreground">
+      <div className="flex items-center justify-between mt-1.5">
+        <div className="text-[11px] text-muted-foreground font-mono">
+          {hover ? `x: ${toMeters(hover.x)} mts, y: ${toMeters(hover.y)} mts` : '\u00a0'}
+        </div>
+        <div className="text-[11px] text-muted-foreground">1 cell = {METERS_PER_CELL} mts</div>
+      </div>
+
+      <div className="flex gap-4 mt-1 text-[11px] text-muted-foreground">
         <span>━━ Wall</span>
-        <span className="text-amber-400">● Door</span>
+        <span className="text-amber-600">⌒ Door</span>
         {result && (
           <>
             <span className="text-blue-500">● Outlet</span>

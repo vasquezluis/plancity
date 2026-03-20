@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eraser, PenLine, Square } from 'lucide-react';
+import { DoorOpen, PenLine, Trash2 } from 'lucide-react';
 import type { DrawMode } from './floor-plan.types';
 
 type Props = {
@@ -39,12 +39,12 @@ export function DrawingToolbar({ mode, wallStarted, onModeChange, onClear }: Pro
         variant={mode === 'door' ? 'default' : 'outline'}
         onClick={() => onModeChange('door')}
       >
-        <Square className="w-4 h-4" />
+        <DoorOpen className="w-4 h-4" />
         Door
       </Button>
 
       <Button className="cursor-pointer" size="sm" variant="destructive" onClick={onClear}>
-        <Eraser className="w-4 h-4" />
+        <Trash2 className="w-4 h-4" />
         Clear
       </Button>
 

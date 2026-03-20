@@ -2,7 +2,8 @@ import type { Point, Wall } from '../types';
 
 export const CANVAS_W = 800;
 export const CANVAS_H = 560;
-export const GRID = 20; // px per grid cell
+export const GRID = 40; // px per grid cell — 1 cell = 10 meters
+export const METERS_PER_CELL = 10; // scale: each grid cell represents 10 m
 
 /** Snap a raw coordinate to the nearest grid point. */
 export function snap(v: number): number {
