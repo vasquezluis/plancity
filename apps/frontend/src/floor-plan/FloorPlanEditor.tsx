@@ -1,7 +1,9 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Trash2, Zap } from 'lucide-react';
+import { useState } from 'react';
 import { DrawingCanvas } from './DrawingCanvas';
+import type { Unit } from './floor-plan.utils';
 import { useFloorPlan } from './useFloorPlan';
 
 export function FloorPlanEditor() {
@@ -17,12 +19,35 @@ export function FloorPlanEditor() {
     handleDoorsChange,
   } = useFloorPlan();
 
+  const [unit, setUnit] = useState<Unit>('m');
+
   return (
     <div>
+      <div className="flex items-center justify-between mb-1">
+        {/* Unit toggle */}
+        <div className="flex items-center rounded-md border border-border overflow-hidden text-xs font-medium">
+          <button
+            type="button"
+            className={`px-3 py-1 cursor-pointer transition-colors ${unit === 'm' ? 'bg-foreground text-background' : 'hover:bg-muted'}`}
+            onClick={() => setUnit('m')}
+          >
+            m
+          </button>
+          <button
+            type="button"
+            className={`px-3 py-1 cursor-pointer transition-colors ${unit === 'ft' ? 'bg-foreground text-background' : 'hover:bg-muted'}`}
+            onClick={() => setUnit('ft')}
+          >
+            ft
+          </button>
+        </div>
+      </div>
+
       <DrawingCanvas
         walls={walls}
         doors={doors}
         result={result}
+        unit={unit}
         onWallsChange={handleWallsChange}
         onDoorsChange={handleDoorsChange}
       />

@@ -8,15 +8,18 @@ import {
   CANVAS_W,
   GRID,
   METERS_PER_CELL,
+  type Unit,
   projectOntoWall,
   snap,
   svgPoint,
+  toDisplay,
 } from './floor-plan.utils';
 
 export function DrawingCanvas({
   walls,
   doors,
   result,
+  unit,
   onWallsChange,
   onDoorsChange,
 }: DrawingCanvasProps) {
@@ -28,7 +31,9 @@ export function DrawingCanvas({
   // ── Grid lines & coordinate labels ─────────────────────────────────────────
   // Each grid cell = METERS_PER_CELL meters. Labels appear on every cell line.
   // Reason: GRID is now 40px so every-cell labeling is readable without clutter.
-  const toMeters = (px: number) => (px / GRID) * METERS_PER_CELL;
+  const unitLabel = unit === 'ft' ? 'ft' : 'm';
+  const cellSize =
+    unit === 'ft' ? `${(METERS_PER_CELL * 3.281).toFixed(1)} ft` : `${METERS_PER_CELL} m`;
   const gridLines: React.ReactNode[] = [];
   for (let x = 0; x <= CANVAS_W; x += GRID) {
     gridLines.push(
@@ -44,7 +49,7 @@ export function DrawingCanvas({
         textAnchor="middle"
         style={{ userSelect: 'none', pointerEvents: 'none' }}
       >
-        {toMeters(x)}
+        {toDisplay(x, unit)}
       </text>
     );
   }
@@ -62,7 +67,7 @@ export function DrawingCanvas({
         textAnchor="start"
         style={{ userSelect: 'none', pointerEvents: 'none' }}
       >
-        {toMeters(y)}
+        {toDisplay(y, unit)}
       </text>
     );
   }
@@ -208,9 +213,11 @@ export function DrawingCanvas({
 
       <div className="flex items-center justify-between mt-1.5">
         <div className="text-[11px] text-muted-foreground font-mono">
-          {hover ? `x: ${toMeters(hover.x)} mts, y: ${toMeters(hover.y)} mts` : '\u00a0'}
+          {hover
+            ? `x: ${toDisplay(hover.x, unit)} ${unitLabel}, y: ${toDisplay(hover.y, unit)} ${unitLabel}`
+            : '\u00a0'}
         </div>
-        <div className="text-[11px] text-muted-foreground">1 cell = {METERS_PER_CELL} mts</div>
+        <div className="text-[11px] text-foreground">1 cell = {cellSize}</div>
       </div>
 
       <div className="flex gap-4 mt-1 text-[11px] text-muted-foreground">
