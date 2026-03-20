@@ -1,0 +1,24 @@
+{
+  "name": "cubepath",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --filter './apps/*' dev",
+    "build": "pnpm --filter './apps/*' build",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "biome check --write .",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "husky": "9.1.7",
+    "lint-staged": "15.4.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json}": ["biome check --write --no-errors-on-unmatched"]
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild"]
+  }
+}
