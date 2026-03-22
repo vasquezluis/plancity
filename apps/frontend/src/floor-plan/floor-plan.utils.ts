@@ -1,7 +1,7 @@
 import type { Point, Wall } from '../types';
 
-export const CANVAS_W = 800;
-export const CANVAS_H = 560;
+export const CANVAS_W = 1200;
+export const CANVAS_H = 800;
 export const GRID = 40; // px per grid cell — 1 cell = 1 meter
 export const METERS_PER_CELL = 1; // scale: each grid cell represents 1 m
 export const FEET_PER_METER = 3.281;
@@ -22,9 +22,23 @@ export function snap(v: number): number {
   return Math.round(v / GRID) * GRID;
 }
 
-/** Convert a mouse event to SVG-local coordinates. */
+/**
+ * Convert a mouse event to SVG-local coordinates.
+ * Reason: uses getScreenCTM().inverse() so the result is correct even when
+ * a viewBox transform (zoom/pan) is applied to the SVG element.
+ */
 export function svgPoint(e: React.MouseEvent<SVGSVGElement>): Point {
-  const rect = e.currentTarget.getBoundingClientRect();
+  const svg = e.currentTarget;
+  const pt = svg.createSVGPoint();
+  pt.x = e.clientX;
+  pt.y = e.clientY;
+  const ctm = svg.getScreenCTM();
+  if (ctm) {
+    const local = pt.matrixTransform(ctm.inverse());
+    return { x: local.x, y: local.y };
+  }
+  // Reason: fallback for environments where getScreenCTM is unavailable (e.g. tests)
+  const rect = svg.getBoundingClientRect();
   return { x: e.clientX - rect.left, y: e.clientY - rect.top };
 }
 

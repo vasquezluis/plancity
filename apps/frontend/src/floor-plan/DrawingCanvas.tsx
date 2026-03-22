@@ -1,4 +1,6 @@
-import { useCallback, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Point } from '../types';
 import { DrawingToolbar } from './DrawingToolbar';
 import { LayoutOverlay } from './LayoutOverlay';
@@ -15,18 +17,90 @@ import {
   toDisplay,
 } from './floor-plan.utils';
 
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 4;
+
 export function DrawingCanvas({
   walls,
   doors,
+  labels,
   result,
   unit,
   onWallsChange,
   onDoorsChange,
+  onLabelsChange,
 }: DrawingCanvasProps) {
-  const [mode, setMode] = useState<'wall' | 'door'>('wall');
+  const [mode, setMode] = useState<'wall' | 'door' | 'text'>('wall');
   const [wallStart, setWallStart] = useState<Point | null>(null);
   const [hover, setHover] = useState<Point | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState<Point>({ x: 0, y: 0 });
   const svgRef = useRef<SVGSVGElement>(null);
+  // Refs so the non-React wheel handler can read current state without re-registration
+  const zoomRef = useRef(zoom);
+  const panRef = useRef(pan);
+  zoomRef.current = zoom;
+  panRef.current = pan;
+  // Pending text label being typed by the user
+  const [pendingLabel, setPendingLabel] = useState<{ x: number; y: number } | null>(null);
+  const [labelText, setLabelText] = useState('');
+  // Middle-mouse pan tracking
+  const isPanningRef = useRef(false);
+  const panStartRef = useRef<{ mouse: Point; pan: Point } | null>(null);
+
+  // ── Zoom / pan helpers ──────────────────────────────────────────────────────
+  const viewBox = `${pan.x} ${pan.y} ${CANVAS_W / zoom} ${CANVAS_H / zoom}`;
+
+  /** Zoom toward the canvas center, clamped to [MIN_ZOOM, MAX_ZOOM]. */
+  function adjustZoom(next: number) {
+    const clamped = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, next));
+    // Keep the visible center stable when zooming with buttons
+    const cx = pan.x + CANVAS_W / zoom / 2;
+    const cy = pan.y + CANVAS_H / zoom / 2;
+    const newW = CANVAS_W / clamped;
+    const newH = CANVAS_H / clamped;
+    setPan({ x: cx - newW / 2, y: cy - newH / 2 });
+    setZoom(clamped);
+  }
+
+  function resetView() {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }
+
+  // Reason: wheel event must be registered with { passive: false } so we can call
+  // preventDefault() and prevent the page from scrolling while zooming the canvas.
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    function handleWheel(e: WheelEvent) {
+      if (!svg) return; // Reason: TypeScript closure narrowing guard
+      e.preventDefault();
+      const factor = e.deltaY > 0 ? 0.9 : 1.1;
+      const curZoom = zoomRef.current;
+      const curPan = panRef.current;
+      const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, curZoom * factor));
+
+      // Convert cursor position to SVG logical coordinates
+      const pt = svg.createSVGPoint();
+      pt.x = e.clientX;
+      pt.y = e.clientY;
+      const ctm = svg.getScreenCTM();
+      if (!ctm) return;
+      const svgPos = pt.matrixTransform(ctm.inverse());
+
+      // Reason: keep the point under the cursor fixed in SVG space after zoom.
+      // Derived from: svgPos.x = newPan.x + (svgPos.x - curPan.x) * (newZoom / curZoom)
+      const newPanX = svgPos.x - (svgPos.x - curPan.x) * (curZoom / newZoom);
+      const newPanY = svgPos.y - (svgPos.y - curPan.y) * (curZoom / newZoom);
+      setPan({ x: newPanX, y: newPanY });
+      setZoom(newZoom);
+    }
+
+    svg.addEventListener('wheel', handleWheel, { passive: false });
+    return () => svg.removeEventListener('wheel', handleWheel);
+  }, []); // register once — reads zoom/pan via refs
 
   // ── Grid lines & coordinate labels ─────────────────────────────────────────
   // Each grid cell = METERS_PER_CELL meters. Labels appear on every cell line.
@@ -73,15 +147,47 @@ export function DrawingCanvas({
   }
 
   // ── Mouse handlers ─────────────────────────────────────────────────────────
-  const handleMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
-    const p = svgPoint(e);
-    setHover({ x: snap(p.x), y: snap(p.y) });
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<SVGSVGElement>) => {
+      if (e.button !== 1) return; // only middle mouse starts a pan
+      e.preventDefault();
+      isPanningRef.current = true;
+      panStartRef.current = { mouse: { x: e.clientX, y: e.clientY }, pan: { ...pan } };
+    },
+    [pan]
+  );
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<SVGSVGElement>) => {
+      if (isPanningRef.current && panStartRef.current) {
+        // Reason: delta in SVG logical units = screen delta / current zoom
+        const dx = (e.clientX - panStartRef.current.mouse.x) / zoom;
+        const dy = (e.clientY - panStartRef.current.mouse.y) / zoom;
+        setPan({ x: panStartRef.current.pan.x - dx, y: panStartRef.current.pan.y - dy });
+        return;
+      }
+      const p = svgPoint(e);
+      setHover({ x: snap(p.x), y: snap(p.y) });
+    },
+    [zoom]
+  );
+
+  const handleMouseUp = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
+    if (e.button === 1) {
+      isPanningRef.current = false;
+      panStartRef.current = null;
+    }
   }, []);
 
-  const handleMouseLeave = useCallback(() => setHover(null), []);
+  const handleMouseLeave = useCallback(() => {
+    isPanningRef.current = false;
+    panStartRef.current = null;
+    setHover(null);
+  }, []);
 
   const handleClick = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
+      if (e.button !== 0) return; // only left-click draws
       const raw = svgPoint(e);
       const p = { x: snap(raw.x), y: snap(raw.y) };
 
@@ -104,38 +210,90 @@ export function DrawingCanvas({
         if (best && best.dist < 40) {
           onDoorsChange([...doors, { x: Math.round(best.proj.x), y: Math.round(best.proj.y) }]);
         }
+      } else if (mode === 'text') {
+        // Open the inline text input at the clicked SVG coordinate
+        setPendingLabel({ x: snap(raw.x), y: snap(raw.y) });
+        setLabelText('');
       }
     },
     [mode, wallStart, walls, doors, onWallsChange, onDoorsChange]
   );
 
-  function handleModeChange(next: 'wall' | 'door') {
+  /** Confirm the pending label and add it to the list. */
+  function confirmLabel() {
+    if (pendingLabel && labelText.trim()) {
+      onLabelsChange([...labels, { x: pendingLabel.x, y: pendingLabel.y, text: labelText.trim() }]);
+    }
+    setPendingLabel(null);
+    setLabelText('');
+  }
+
+  function cancelLabel() {
+    setPendingLabel(null);
+    setLabelText('');
+  }
+
+  function handleModeChange(next: 'wall' | 'door' | 'text') {
     setMode(next);
     setWallStart(null);
+    cancelLabel();
   }
 
   function handleClear() {
     onWallsChange([]);
     onDoorsChange([]);
+    onLabelsChange([]);
     setWallStart(null);
+    cancelLabel();
   }
 
   return (
     <div>
-      <DrawingToolbar
-        mode={mode}
-        wallStarted={wallStart !== null}
-        onModeChange={handleModeChange}
-        onClear={handleClear}
-      />
+      <div className="flex items-center justify-between mb-2">
+        <DrawingToolbar
+          mode={mode}
+          wallStarted={wallStart !== null}
+          onModeChange={handleModeChange}
+          onClear={handleClear}
+        />
+
+        {/* Zoom controls */}
+        <div className="flex items-center gap-1">
+          <Button
+            size="sm"
+            variant="outline"
+            className="cursor-pointer px-2"
+            onClick={() => adjustZoom(zoom * 1.25)}
+          >
+            <ZoomIn className="w-4 h-4" />
+          </Button>
+          <span className="text-xs text-muted-foreground w-10 text-center tabular-nums">
+            {Math.round(zoom * 100)}%
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="cursor-pointer px-2"
+            onClick={() => adjustZoom(zoom * 0.8)}
+          >
+            <ZoomOut className="w-4 h-4" />
+          </Button>
+          <Button size="sm" variant="outline" className="cursor-pointer px-2" onClick={resetView}>
+            <RotateCcw className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
 
       <svg
         ref={svgRef}
         width={CANVAS_W}
         height={CANVAS_H}
+        viewBox={viewBox}
         className="rounded border border-border bg-white cursor-crosshair"
         onClick={handleClick}
+        onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
         onKeyUp={() => {}}
       >
@@ -208,6 +366,57 @@ export function DrawingCanvas({
           </g>
         ))}
 
+        {/* Text labels */}
+        {labels.map((label) => (
+          <text
+            key={`label-${label.x},${label.y}-${label.text}`}
+            x={label.x}
+            y={label.y}
+            fontSize={13}
+            fontWeight="600"
+            fill="#6b21a8"
+            stroke="white"
+            strokeWidth={3}
+            paintOrder="stroke"
+            style={{ userSelect: 'none', pointerEvents: 'none' }}
+          >
+            {label.text}
+          </text>
+        ))}
+
+        {/* Inline text input while placing a new label */}
+        {pendingLabel && (
+          <foreignObject x={pendingLabel.x} y={pendingLabel.y - 22} width={200} height={28}>
+            <div>
+              <input
+                // biome-ignore lint/a11y/noAutofocus: intentional — user just clicked to place a label
+                autoFocus
+                type="text"
+                value={labelText}
+                onChange={(e) => setLabelText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') confirmLabel();
+                  if (e.key === 'Escape') cancelLabel();
+                }}
+                onBlur={confirmLabel}
+                placeholder="Room name…"
+                style={{
+                  width: '100%',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  padding: '2px 6px',
+                  border: '1.5px solid #6b21a8',
+                  borderRadius: '4px',
+                  outline: 'none',
+                  background: 'white',
+                  color: '#6b21a8',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          </foreignObject>
+        )}
+
         {result && <LayoutOverlay result={result} />}
       </svg>
 
@@ -223,6 +432,7 @@ export function DrawingCanvas({
       <div className="flex gap-4 mt-1 text-[11px] text-muted-foreground">
         <span>━━ Wall</span>
         <span className="text-amber-600">⌒ Door</span>
+        <span className="text-purple-800">T Label</span>
         {result && (
           <>
             <span className="text-blue-500">● Outlet</span>

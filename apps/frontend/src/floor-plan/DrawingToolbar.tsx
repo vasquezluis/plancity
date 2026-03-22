@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { DoorOpen, PenLine, Trash2 } from 'lucide-react';
+import { DoorOpen, PenLine, Trash2, Type } from 'lucide-react';
 import type { DrawMode } from './floor-plan.types';
 
 type Props = {
@@ -16,13 +16,14 @@ const HINTS: Record<DrawMode, { active: string; idle: string }> = {
     active: '🚪 Click near a wall to place door',
     idle: '🚪 Click near a wall to place door',
   },
+  text: { active: '✏️ Type and press Enter to confirm', idle: '🔤 Click to place a label' },
 };
 
 export function DrawingToolbar({ mode, wallStarted, onModeChange, onClear }: Props) {
   const hint = wallStarted ? HINTS[mode].active : HINTS[mode].idle;
 
   return (
-    <div className="flex items-center gap-2 mb-2">
+    <div className="flex items-center gap-2">
       <Button
         size="sm"
         className="cursor-pointer"
@@ -41,6 +42,16 @@ export function DrawingToolbar({ mode, wallStarted, onModeChange, onClear }: Pro
       >
         <DoorOpen className="w-4 h-4" />
         Door
+      </Button>
+
+      <Button
+        size="sm"
+        className="cursor-pointer"
+        variant={mode === 'text' ? 'default' : 'outline'}
+        onClick={() => onModeChange('text')}
+      >
+        <Type className="w-4 h-4" />
+        Label
       </Button>
 
       <Button className="cursor-pointer" size="sm" variant="destructive" onClick={onClear}>

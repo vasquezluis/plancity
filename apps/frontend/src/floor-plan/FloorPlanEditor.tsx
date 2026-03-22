@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Timer, Trash2, Zap } from 'lucide-react';
 import { useState } from 'react';
+import type { Label } from '../types';
 import { DrawingCanvas } from './DrawingCanvas';
 import type { Unit } from './floor-plan.utils';
 import { useFloorPlan } from './useFloorPlan';
@@ -22,6 +23,7 @@ export function FloorPlanEditor() {
   } = useFloorPlan();
 
   const [unit, setUnit] = useState<Unit>('m');
+  const [labels, setLabels] = useState<Label[]>([]);
 
   const isRateLimited = rateLimit.remaining === 0 && retryIn > 0;
 
@@ -68,10 +70,12 @@ export function FloorPlanEditor() {
       <DrawingCanvas
         walls={walls}
         doors={doors}
+        labels={labels}
         result={result}
         unit={unit}
         onWallsChange={handleWallsChange}
         onDoorsChange={handleDoorsChange}
+        onLabelsChange={setLabels}
       />
 
       {/* Stats */}

@@ -1,4 +1,5 @@
 export type Point = { x: number; y: number };
+export type Label = { x: number; y: number; text: string };
 export type Wall = { x1: number; y1: number; x2: number; y2: number };
 export type Door = { x: number; y: number };
 export type Outlet = { x: number; y: number };
