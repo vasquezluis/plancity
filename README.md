@@ -1,4 +1,6 @@
-# CubePath — Auto Electrical Wiring Planner
+# PlanCity
+
+**Auto Electrical Wiring Planner**
 
 A tool that lets users sketch a floor plan, then automatically places outlets and routes wiring.
 

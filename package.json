@@ -8,6 +8,7 @@
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check --write .",
+    "test": "pnpm --filter './apps/*' test",
     "prepare": "husky"
   },
   "devDependencies": {

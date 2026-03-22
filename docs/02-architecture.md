@@ -12,7 +12,8 @@ Screaming Architecture (feature driven)
 - zod
 - Nodejs + express
 - React
-  - react query
+  - Tailwindcss + Shadcn
+  - react query (if needed)
   - zustand (if needed)
 
 ## Code helpers
