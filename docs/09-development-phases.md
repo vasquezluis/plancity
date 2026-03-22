@@ -13,13 +13,13 @@
 - Place outlets (simple rules)
 - Draw straight wires
 
-## Phase 2
+## [✅] Phase 2
 
 - Add routing (A\*)
 - Add switches
 - Add panel
 
-## Phase 3
+## [✅] Phase 3
 
 - AI integration
 - Layout improvements

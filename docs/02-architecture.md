@@ -6,6 +6,22 @@
 
 Screaming Architecture (feature driven)
 
+**Example of features**
+
+```
+# example of frontend
+
+├── src
+│   ├── App.tsx
+│   ├── floor-plan
+│   │   ├── api
+│   │   ├── components
+│   │   ├── FloorPlanEditor.tsx
+│   │   ├── hooks
+│   │   ├── types
+│   │   └── utils
+```
+
 ## Technologies
 
 - TypeScript

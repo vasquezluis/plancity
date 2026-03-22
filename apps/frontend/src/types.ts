@@ -1,9 +1,11 @@
 export type Point = { x: number; y: number };
+export type Label = { x: number; y: number; text: string };
 export type Wall = { x1: number; y1: number; x2: number; y2: number };
 export type Door = { x: number; y: number };
 export type Outlet = { x: number; y: number };
-// Wire = pair of points [from, to] — Phase 1 uses straight lines
-export type Wire = [Point, Point];
+export type Switch = { x: number; y: number };
+// Wire is a polyline path (A* result from Phase 2+) — two or more points
+export type Wire = Point[];
 
 export type FloorPlanInput = {
   walls: Wall[];
@@ -12,6 +14,13 @@ export type FloorPlanInput = {
 
 export type GenerateResponse = {
   outlets: Outlet[];
+  switches: Switch[];
   panel: Point;
   wires: Wire[];
+};
+
+// AI returns an enhanced layout (applied directly to the canvas) + a log of what changed + overall explanation
+export type AiEnhancedResponse = GenerateResponse & {
+  changes: string[];
+  explanation: string;
 };

@@ -1,10 +1,13 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Timer, Trash2, Zap } from 'lucide-react';
+import { Sparkles, Timer, Trash2, Zap } from 'lucide-react';
 import { useState } from 'react';
-import { DrawingCanvas } from './DrawingCanvas';
-import type { Unit } from './floor-plan.utils';
-import { useFloorPlan } from './useFloorPlan';
+import type { GenerateResponse, Label } from '../types';
+import { postAiAnalysis } from './api/ai.api';
+import { AiPanel } from './components/AiPanel';
+import { DrawingCanvas } from './components/DrawingCanvas';
+import { useFloorPlan } from './hooks/useFloorPlan';
+import type { Unit } from './utils/floor-plan.utils';
 
 export function FloorPlanEditor() {
   const {
@@ -15,15 +18,64 @@ export function FloorPlanEditor() {
     error,
     rateLimit,
     retryIn,
-    handleGenerate,
-    handleClear,
+    handleGenerate: _handleGenerate,
+    handleClear: _handleClear,
     handleWallsChange,
     handleDoorsChange,
   } = useFloorPlan();
 
   const [unit, setUnit] = useState<Unit>('m');
+  const [labels, setLabels] = useState<Label[]>([]);
+
+  // AI-optimized layout — replaces `result` on the canvas when set
+  const [aiResult, setAiResult] = useState<GenerateResponse | null>(null);
+  const [aiChanges, setAiChanges] = useState<string[] | null>(null);
+  const [aiExplanation, setAiExplanation] = useState<string | null>(null);
+  const [aiPending, setAiPending] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  function clearAi() {
+    setAiResult(null);
+    setAiChanges(null);
+    setAiExplanation(null);
+    setAiError(null);
+  }
+
+  function handleGenerate() {
+    clearAi();
+    _handleGenerate();
+  }
+
+  function handleClear() {
+    clearAi();
+    _handleClear();
+  }
+
+  async function handleAiAnalyze() {
+    const layout = aiResult ?? result;
+    if (!layout) return;
+    setAiPending(true);
+    setAiError(null);
+    setAiChanges(null);
+    try {
+      const { changes, explanation, ...enhanced } = await postAiAnalysis(
+        { walls, doors },
+        layout,
+        unit
+      );
+      setAiResult(enhanced);
+      setAiChanges(changes);
+      setAiExplanation(explanation);
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'AI analysis failed');
+    } finally {
+      setAiPending(false);
+    }
+  }
 
   const isRateLimited = rateLimit.remaining === 0 && retryIn > 0;
+  // Show AI-optimized layout when available, otherwise show the generated one
+  const displayResult = aiResult ?? result;
 
   return (
     <div>
@@ -68,10 +120,12 @@ export function FloorPlanEditor() {
       <DrawingCanvas
         walls={walls}
         doors={doors}
-        result={result}
+        labels={labels}
+        result={displayResult}
         unit={unit}
         onWallsChange={handleWallsChange}
         onDoorsChange={handleDoorsChange}
+        onLabelsChange={setLabels}
       />
 
       {/* Stats */}
@@ -82,15 +136,16 @@ export function FloorPlanEditor() {
         <Badge variant="outline">
           {doors.length} door{doors.length !== 1 ? 's' : ''}
         </Badge>
-        {result && (
+        {displayResult && (
           <>
             <Badge className="bg-blue-500 text-white">
-              {result.outlets.length} outlet
-              {result.outlets.length !== 1 ? 's' : ''}
+              {displayResult.outlets.length} outlet
+              {displayResult.outlets.length !== 1 ? 's' : ''}
             </Badge>
             <Badge className="bg-amber-500 text-white">
-              {result.wires.length} wire{result.wires.length !== 1 ? 's' : ''}
+              {displayResult.wires.length} wire{displayResult.wires.length !== 1 ? 's' : ''}
             </Badge>
+            {aiResult && <Badge className="bg-purple-500 text-white">AI optimized</Badge>}
           </>
         )}
       </div>
@@ -109,6 +164,17 @@ export function FloorPlanEditor() {
           <Trash2 className="w-4 h-4" />
           Clear All
         </Button>
+        {result && (
+          <Button
+            className="cursor-pointer"
+            variant="outline"
+            onClick={handleAiAnalyze}
+            disabled={aiPending || isRateLimited}
+          >
+            <Sparkles className="w-4 h-4" />
+            {aiPending ? 'Optimizing…' : 'Optimize with AI'}
+          </Button>
+        )}
       </div>
 
       {/* Rate limit warning */}
@@ -122,6 +188,13 @@ export function FloorPlanEditor() {
       {error && !isRateLimited && (
         <p className="mt-2 text-sm text-destructive">Error: {error.message}</p>
       )}
+
+      <AiPanel
+        changes={aiChanges}
+        explanation={aiExplanation}
+        isPending={aiPending}
+        error={aiError}
+      />
     </div>
   );
 }

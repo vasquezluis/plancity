@@ -1,8 +1,8 @@
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import type { Door, GenerateResponse, Wall } from '../types';
-import { postPlan } from './floor-plan.api';
-import type { PlanResponse, RateLimitInfo } from './floor-plan.types';
+import type { Door, GenerateResponse, Wall } from '../../types';
+import { postPlan } from '../api/floor-plan.api';
+import type { PlanResponse, RateLimitInfo } from '../types/floor-plan.types';
 
 const DEFAULT_RATE_LIMIT: RateLimitInfo = { limit: 3, remaining: 3, resetAt: 0 };
 
