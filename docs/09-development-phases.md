@@ -19,7 +19,7 @@
 - Add switches
 - Add panel
 
-## Phase 3
+## [✅] Phase 3
 
 - AI integration
 - Layout improvements

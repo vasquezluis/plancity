@@ -18,3 +18,9 @@ export type GenerateResponse = {
   panel: Point;
   wires: Wire[];
 };
+
+// AI returns an enhanced layout (applied directly to the canvas) + a log of what changed + overall explanation
+export type AiEnhancedResponse = GenerateResponse & {
+  changes: string[];
+  explanation: string;
+};

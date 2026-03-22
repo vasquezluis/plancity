@@ -50,3 +50,7 @@ Return JSON only.
 
 - Keep AI optional for MVP
 - Use it for refinement
+
+## Explanation
+
+**The AI** can also add a small **explanation** of the enhancement and show it on the **frontend**
