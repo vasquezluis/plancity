@@ -33,3 +33,4 @@ POST /generate-layout
 
 - Stateless API
 - JSON only
+- Rate limiting -> 3 requests per minute

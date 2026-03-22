@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trash2, Zap } from 'lucide-react';
+import { Timer, Trash2, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { DrawingCanvas } from './DrawingCanvas';
 import type { Unit } from './floor-plan.utils';
@@ -13,6 +13,8 @@ export function FloorPlanEditor() {
     result,
     isPending,
     error,
+    rateLimit,
+    retryIn,
     handleGenerate,
     handleClear,
     handleWallsChange,
@@ -20,6 +22,8 @@ export function FloorPlanEditor() {
   } = useFloorPlan();
 
   const [unit, setUnit] = useState<Unit>('m');
+
+  const isRateLimited = rateLimit.remaining === 0 && retryIn > 0;
 
   return (
     <div>
@@ -40,6 +44,24 @@ export function FloorPlanEditor() {
           >
             ft
           </button>
+        </div>
+
+        {/* Rate limit indicator */}
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <span>
+            {rateLimit.remaining}/{rateLimit.limit} requests left
+          </span>
+          {/* Dots visualising remaining uses */}
+          <div className="flex gap-0.5 ml-1">
+            {Array.from({ length: rateLimit.limit }).map((_, i) => (
+              <span
+                // Reason: index is stable here — limit is a fixed constant (3)
+                // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length constant array
+                key={i}
+                className={`w-2 h-2 rounded-full ${i < rateLimit.remaining ? 'bg-green-500' : 'bg-muted'}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -78,7 +100,7 @@ export function FloorPlanEditor() {
         <Button
           className="cursor-pointer"
           onClick={handleGenerate}
-          disabled={walls.length === 0 || isPending}
+          disabled={walls.length === 0 || isPending || isRateLimited}
         >
           <Zap className="w-4 h-4" />
           {isPending ? 'Generating…' : 'Generate'}
@@ -89,7 +111,17 @@ export function FloorPlanEditor() {
         </Button>
       </div>
 
-      {error && <p className="mt-2 text-sm text-destructive">Error: {error.message}</p>}
+      {/* Rate limit warning */}
+      {isRateLimited && (
+        <p className="mt-2 text-sm text-amber-600 flex items-center gap-1">
+          <Timer className="w-4 h-4" />
+          Rate limit reached. Try again in {retryIn}s.
+        </p>
+      )}
+
+      {error && !isRateLimited && (
+        <p className="mt-2 text-sm text-destructive">Error: {error.message}</p>
+      )}
     </div>
   );
 }

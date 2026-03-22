@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import floorPlanRouter from './floor-plan/floor-plan.router.js';
+import { rateLimitMiddleware } from './middleware/rate-limit.js';
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
@@ -12,8 +13,8 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Electrical layout generation
-app.use('/plan', floorPlanRouter);
+// Electrical layout generation — rate limited to 3 req/min
+app.use('/plan', rateLimitMiddleware, floorPlanRouter);
 
 app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);
