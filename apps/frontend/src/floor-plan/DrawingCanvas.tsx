@@ -226,6 +226,7 @@ export function DrawingCanvas({
         {result && (
           <>
             <span className="text-blue-500">● Outlet</span>
+            <span className="text-pink-500">■ Switch</span>
             <span className="text-emerald-500">■ Panel</span>
             <span className="text-amber-500">- - Wire</span>
           </>

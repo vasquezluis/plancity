@@ -4,6 +4,7 @@ import {
   generateLayout,
   placeOutlets,
   placePanel,
+  placeSwitches,
   routeWires,
 } from '../../src/layout/layout.engine';
 
@@ -38,6 +39,30 @@ describe('placeOutlets', () => {
   });
 });
 
+// ── placeSwitches ────────────────────────────────────────────────────────────
+
+describe('placeSwitches', () => {
+  it('places one switch per door offset along the nearest wall', () => {
+    const walls = [{ x1: 0, y1: 0, x2: 300, y2: 0 }];
+    const doors = [{ x: 100, y: 0 }];
+    const switches = placeSwitches(walls, doors);
+    expect(switches).toHaveLength(1);
+    // Switch should be near y=0 (on the horizontal wall)
+    expect(switches[0].y).toBeCloseTo(0, 0);
+    // Switch should be offset from the door position (not exactly at x=100)
+    expect(switches[0].x).not.toBe(100);
+  });
+
+  it('returns empty array when no doors are provided', () => {
+    const walls = [{ x1: 0, y1: 0, x2: 300, y2: 0 }];
+    expect(placeSwitches(walls, [])).toHaveLength(0);
+  });
+
+  it('returns empty array when no walls are provided', () => {
+    expect(placeSwitches([], [{ x: 100, y: 0 }])).toHaveLength(0);
+  });
+});
+
 // ── placePanel ──────────────────────────────────────────────────────────────
 
 describe('placePanel', () => {
@@ -56,41 +81,61 @@ describe('placePanel', () => {
 describe('routeWires', () => {
   it('creates one wire per outlet connecting outlet to panel', () => {
     const outlets = [
-      { x: 60, y: 0 },
-      { x: 120, y: 0 },
+      { x: 60, y: 40 },
+      { x: 120, y: 40 },
     ];
     const panel = { x: 0, y: 0 };
-    const wires = routeWires(outlets, panel);
+    const wires = routeWires(outlets, [], panel, []);
 
     expect(wires).toHaveLength(2);
-    expect(wires[0][0]).toEqual({ x: 60, y: 0 });
-    expect(wires[0][1]).toEqual(panel);
-    expect(wires[1][0]).toEqual({ x: 120, y: 0 });
-    expect(wires[1][1]).toEqual(panel);
+    // Each wire starts at its source
+    expect(wires[0][0]).toEqual({ x: 60, y: 40 });
+    // Each wire ends at the panel
+    expect(wires[0][wires[0].length - 1]).toEqual(panel);
+    expect(wires[1][0]).toEqual({ x: 120, y: 40 });
+    expect(wires[1][wires[1].length - 1]).toEqual(panel);
   });
 
-  it('returns empty array when there are no outlets', () => {
-    expect(routeWires([], { x: 0, y: 0 })).toHaveLength(0);
+  it('includes one wire per switch in addition to outlet wires', () => {
+    const outlets = [{ x: 60, y: 40 }];
+    const switches = [{ x: 80, y: 0 }];
+    const panel = { x: 0, y: 0 };
+    const wires = routeWires(outlets, switches, panel, []);
+
+    // outlets + switches = 2 wires total
+    expect(wires).toHaveLength(2);
+  });
+
+  it('returns empty array when there are no outlets or switches', () => {
+    expect(routeWires([], [], { x: 0, y: 0 }, [])).toHaveLength(0);
+  });
+
+  it('produces a polyline path (≥ 2 points) for each wire', () => {
+    const wires = routeWires([{ x: 60, y: 40 }], [], { x: 0, y: 0 }, []);
+    expect(wires[0].length).toBeGreaterThanOrEqual(2);
   });
 });
 
 // ── generateLayout ──────────────────────────────────────────────────────────
 
 describe('generateLayout', () => {
-  it('produces a full layout with panel, outlets and wires', () => {
+  it('produces a full layout with panel, outlets, switches, and wires', () => {
     const walls = [{ x1: 0, y1: 0, x2: 300, y2: 0 }];
-    const result = generateLayout(walls, []);
+    const doors = [{ x: 100, y: 0 }];
+    const result = generateLayout(walls, doors);
 
     expect(result.panel).toEqual({ x: 0, y: 0 });
     expect(result.outlets.length).toBeGreaterThan(0);
-    // Each wire should connect an outlet to the panel
-    expect(result.wires).toHaveLength(result.outlets.length);
+    expect(result.switches).toHaveLength(1); // one switch per door
+    // Total wires = outlets + switches
+    expect(result.wires).toHaveLength(result.outlets.length + result.switches.length);
   });
 
   it('handles empty input gracefully', () => {
     const result = generateLayout([], []);
     expect(result.panel).toEqual({ x: 0, y: 0 });
     expect(result.outlets).toHaveLength(0);
+    expect(result.switches).toHaveLength(0);
     expect(result.wires).toHaveLength(0);
   });
 });

@@ -13,7 +13,7 @@
 - Place outlets (simple rules)
 - Draw straight wires
 
-## Phase 2
+## [✅] Phase 2
 
 - Add routing (A\*)
 - Add switches
