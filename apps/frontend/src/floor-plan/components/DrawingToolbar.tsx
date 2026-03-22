@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DoorOpen, PenLine, Trash2, Type } from 'lucide-react';
-import type { DrawMode } from './floor-plan.types';
+import type { DrawMode } from '../types/floor-plan.types';
 
 type Props = {
   mode: DrawMode;

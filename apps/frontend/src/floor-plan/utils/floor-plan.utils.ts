@@ -1,4 +1,4 @@
-import type { Point, Wall } from '../types';
+import type { Point, Wall } from '../../types';
 
 export const CANVAS_W = 1200;
 export const CANVAS_H = 800;

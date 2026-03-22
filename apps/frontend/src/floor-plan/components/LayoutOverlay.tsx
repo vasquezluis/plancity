@@ -1,4 +1,4 @@
-import type { GenerateResponse } from '../types';
+import type { GenerateResponse } from '../../types';
 
 type Props = { result: GenerateResponse };
 

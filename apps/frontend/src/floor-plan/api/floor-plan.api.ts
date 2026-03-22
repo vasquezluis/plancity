@@ -1,5 +1,5 @@
-import type { FloorPlanInput, GenerateResponse } from '../types';
-import type { PlanResponse, RateLimitInfo } from './floor-plan.types';
+import type { FloorPlanInput, GenerateResponse } from '../../types';
+import type { PlanResponse, RateLimitInfo } from '../types/floor-plan.types';
 
 function parseRateLimit(headers: Headers): RateLimitInfo {
   return {

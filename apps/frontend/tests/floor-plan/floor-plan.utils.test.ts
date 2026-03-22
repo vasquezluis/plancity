@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { GRID, projectOntoWall, snap, toDisplay } from '../../src/floor-plan/floor-plan.utils';
+import {
+  GRID,
+  projectOntoWall,
+  snap,
+  toDisplay,
+} from '../../src/floor-plan/utils/floor-plan.utils';
 
 describe('snap', () => {
   it('snaps to the nearest grid line', () => {

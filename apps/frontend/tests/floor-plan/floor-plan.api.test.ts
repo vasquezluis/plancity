@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { postPlan } from '../../src/floor-plan/floor-plan.api';
+import { postPlan } from '../../src/floor-plan/api/floor-plan.api';
 
 const INPUT = { walls: [{ x1: 0, y1: 0, x2: 40, y2: 0 }], doors: [] };
 const PLAN_DATA = { outlets: [], switches: [], panel: { x: 0, y: 0 }, wires: [] };

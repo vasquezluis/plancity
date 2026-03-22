@@ -3,9 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Timer, Trash2, Zap } from 'lucide-react';
 import { useState } from 'react';
 import type { Label } from '../types';
-import { DrawingCanvas } from './DrawingCanvas';
-import type { Unit } from './floor-plan.utils';
-import { useFloorPlan } from './useFloorPlan';
+import { DrawingCanvas } from './components/DrawingCanvas';
+import { useFloorPlan } from './hooks/useFloorPlan';
+import type { Unit } from './utils/floor-plan.utils';
 
 export function FloorPlanEditor() {
   const {
