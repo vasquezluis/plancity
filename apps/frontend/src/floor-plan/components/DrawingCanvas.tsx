@@ -2,7 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Point } from '../../types';
 import { useLabelInput } from '../hooks/useLabelInput';
 import { useZoomPan } from '../hooks/useZoomPan';
-import type { DrawMode, DrawingCanvasProps } from '../types/floor-plan.types';
+import {
+  DEFAULT_VISIBILITY,
+  type DrawMode,
+  type DrawingCanvasProps,
+  type LayerVisibility,
+} from '../types/floor-plan.types';
 import { computeContentBounds, exportPng, exportSvg } from '../utils/export';
 import { CANVAS_H, CANVAS_W, projectOntoWall, snap, svgPoint } from '../utils/floor-plan.utils';
 import { CanvasFooter } from './CanvasFooter';
@@ -10,6 +15,7 @@ import { CanvasGrid } from './CanvasGrid';
 import { DoorSymbol } from './DoorSymbol';
 import { DrawingToolbar } from './DrawingToolbar';
 import { LabelInput } from './LabelInput';
+import { LayerToggles } from './LayerToggles';
 import { LayoutOverlay } from './LayoutOverlay';
 import { WallMeasurements } from './WallMeasurements';
 import { ZoomControls } from './ZoomControls';
@@ -29,6 +35,11 @@ export function DrawingCanvas({
   const [hover, setHover] = useState<Point | null>(null);
   // True while the Space key is held — temporarily activates pan regardless of mode
   const [tempPan, setTempPan] = useState(false);
+  const [visibility, setVisibility] = useState<LayerVisibility>(DEFAULT_VISIBILITY);
+
+  function toggleLayer(key: keyof LayerVisibility, value: boolean) {
+    setVisibility((prev) => ({ ...prev, [key]: value }));
+  }
   const svgRef = useRef<SVGSVGElement>(null);
 
   const activePan = mode === 'pan' || tempPan;
@@ -190,28 +201,31 @@ export function DrawingCanvas({
         <title>Interactive drawing canvas for floor plans</title>
         <CanvasGrid unit={unit} />
 
-        {walls.map((w) => (
-          <line
-            key={`${w.x1}-${w.y1}-${w.x2}-${w.y2}`}
-            x1={w.x1}
-            y1={w.y1}
-            x2={w.x2}
-            y2={w.y2}
-            stroke="#1f2937"
-            strokeWidth={3}
-            strokeLinecap="round"
-          />
-        ))}
+        {visibility.walls &&
+          walls.map((w) => (
+            <line
+              key={`${w.x1}-${w.y1}-${w.x2}-${w.y2}`}
+              x1={w.x1}
+              y1={w.y1}
+              x2={w.x2}
+              y2={w.y2}
+              stroke="#1f2937"
+              strokeWidth={3}
+              strokeLinecap="round"
+            />
+          ))}
 
-        <WallMeasurements
-          walls={walls}
-          unit={unit}
-          preview={
-            mode === 'wall' && !activePan && wallStart && hover
-              ? { x1: wallStart.x, y1: wallStart.y, x2: hover.x, y2: hover.y }
-              : null
-          }
-        />
+        {visibility.measurements && (
+          <WallMeasurements
+            walls={walls}
+            unit={unit}
+            preview={
+              mode === 'wall' && !activePan && wallStart && hover
+                ? { x1: wallStart.x, y1: wallStart.y, x2: hover.x, y2: hover.y }
+                : null
+            }
+          />
+        )}
 
         {wallStart && <circle cx={wallStart.x} cy={wallStart.y} r={4} fill="#3b82f6" />}
 
@@ -227,26 +241,25 @@ export function DrawingCanvas({
           />
         )}
 
-        {doors.map((d) => (
-          <DoorSymbol key={`${d.x}-${d.y}`} door={d} />
-        ))}
+        {visibility.doors && doors.map((d) => <DoorSymbol key={`${d.x}-${d.y}`} door={d} />)}
 
-        {labels.map((label) => (
-          <text
-            key={`label-${label.x},${label.y}-${label.text}`}
-            x={label.x}
-            y={label.y}
-            fontSize={13}
-            fontWeight="600"
-            fill="#6b21a8"
-            stroke="white"
-            strokeWidth={3}
-            paintOrder="stroke"
-            style={{ userSelect: 'none', pointerEvents: 'none' }}
-          >
-            {label.text}
-          </text>
-        ))}
+        {visibility.labels &&
+          labels.map((label) => (
+            <text
+              key={`label-${label.x},${label.y}-${label.text}`}
+              x={label.x}
+              y={label.y}
+              fontSize={13}
+              fontWeight="600"
+              fill="#6b21a8"
+              stroke="white"
+              strokeWidth={3}
+              paintOrder="stroke"
+              style={{ userSelect: 'none', pointerEvents: 'none' }}
+            >
+              {label.text}
+            </text>
+          ))}
 
         {pendingLabel && (
           <LabelInput
@@ -259,8 +272,18 @@ export function DrawingCanvas({
           />
         )}
 
-        {result && <LayoutOverlay result={result} />}
+        {result && (
+          <LayoutOverlay
+            result={result}
+            showWires={visibility.wires}
+            showOutlets={visibility.outlets}
+            showSwitches={visibility.switches}
+            showPanel={visibility.panel}
+          />
+        )}
       </svg>
+
+      <LayerToggles visibility={visibility} hasResult={!!result} onChange={toggleLayer} />
 
       <CanvasFooter hover={hover} unit={unit} result={result} />
     </div>
