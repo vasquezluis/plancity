@@ -24,7 +24,7 @@
 - AI integration
 - Layout improvements
 
-## Phase 4
+## [✅] Phase 4
 
 - Metrics (wire length)
 - SVG export

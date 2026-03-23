@@ -1,13 +1,14 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Timer, Trash2, Zap } from 'lucide-react';
+import { AlertCircle, Sparkles, Trash2, Zap } from 'lucide-react';
 import { useState } from 'react';
 import type { GenerateResponse, Label } from '../types';
 import { postAiAnalysis } from './api/ai.api';
 import { AiPanel } from './components/AiPanel';
 import { DrawingCanvas } from './components/DrawingCanvas';
+import { RateLimitBanner } from './components/RateLimitBanner';
 import { useFloorPlan } from './hooks/useFloorPlan';
-import type { Unit } from './utils/floor-plan.utils';
+import { type Unit, computeWireLength } from './utils/floor-plan.utils';
 
 export function FloorPlanEditor() {
   const {
@@ -145,6 +146,9 @@ export function FloorPlanEditor() {
             <Badge className="bg-amber-500 text-white">
               {displayResult.wires.length} wire{displayResult.wires.length !== 1 ? 's' : ''}
             </Badge>
+            <Badge variant="outline">
+              {computeWireLength(displayResult.wires, unit)} {unit} total wire
+            </Badge>
             {aiResult && <Badge className="bg-purple-500 text-white">AI optimized</Badge>}
           </>
         )}
@@ -177,16 +181,22 @@ export function FloorPlanEditor() {
         )}
       </div>
 
-      {/* Rate limit warning */}
       {isRateLimited && (
-        <p className="mt-2 text-sm text-amber-600 flex items-center gap-1">
-          <Timer className="w-4 h-4" />
-          Rate limit reached. Try again in {retryIn}s.
-        </p>
+        <RateLimitBanner
+          limit={rateLimit.limit}
+          remaining={rateLimit.remaining}
+          retryIn={retryIn}
+        />
       )}
 
       {error && !isRateLimited && (
-        <p className="mt-2 text-sm text-destructive">Error: {error.message}</p>
+        <div className="mt-3 p-3 rounded-md border border-destructive/30 bg-destructive/5 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-destructive">Generation failed</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{error.message}</p>
+          </div>
+        </div>
       )}
 
       <AiPanel

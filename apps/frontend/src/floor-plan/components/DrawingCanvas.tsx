@@ -1,9 +1,9 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Point } from '../../types';
 import { useLabelInput } from '../hooks/useLabelInput';
 import { useZoomPan } from '../hooks/useZoomPan';
-import type { DrawingCanvasProps } from '../types/floor-plan.types';
-import { computeContentBounds, exportPng } from '../utils/export';
+import type { DrawMode, DrawingCanvasProps } from '../types/floor-plan.types';
+import { computeContentBounds, exportPng, exportSvg } from '../utils/export';
 import { CANVAS_H, CANVAS_W, projectOntoWall, snap, svgPoint } from '../utils/floor-plan.utils';
 import { CanvasFooter } from './CanvasFooter';
 import { CanvasGrid } from './CanvasGrid';
@@ -11,6 +11,7 @@ import { DoorSymbol } from './DoorSymbol';
 import { DrawingToolbar } from './DrawingToolbar';
 import { LabelInput } from './LabelInput';
 import { LayoutOverlay } from './LayoutOverlay';
+import { WallMeasurements } from './WallMeasurements';
 import { ZoomControls } from './ZoomControls';
 
 export function DrawingCanvas({
@@ -23,14 +24,40 @@ export function DrawingCanvas({
   onDoorsChange,
   onLabelsChange,
 }: DrawingCanvasProps) {
-  const [mode, setMode] = useState<'wall' | 'door' | 'text'>('wall');
+  const [mode, setMode] = useState<DrawMode>('wall');
   const [wallStart, setWallStart] = useState<Point | null>(null);
   const [hover, setHover] = useState<Point | null>(null);
+  // True while the Space key is held — temporarily activates pan regardless of mode
+  const [tempPan, setTempPan] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const { zoom, viewBox, adjustZoom, resetView, panHandlers } = useZoomPan(svgRef);
+  const activePan = mode === 'pan' || tempPan;
+  const { zoom, viewBox, isPanning, adjustZoom, resetView, panHandlers } = useZoomPan(
+    svgRef,
+    activePan
+  );
   const { pendingLabel, labelText, setLabelText, startLabel, confirmLabel, cancelLabel } =
     useLabelInput(labels, onLabelsChange);
+
+  // Space key: hold to pan temporarily, release to restore previous mode
+  useEffect(() => {
+    function down(e: KeyboardEvent) {
+      // Reason: don't hijack Space while the user is typing in a label input
+      if (e.code === 'Space' && !e.repeat && !(e.target instanceof HTMLInputElement)) {
+        e.preventDefault();
+        setTempPan(true);
+      }
+    }
+    function up(e: KeyboardEvent) {
+      if (e.code === 'Space') setTempPan(false);
+    }
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    return () => {
+      window.removeEventListener('keydown', down);
+      window.removeEventListener('keyup', up);
+    };
+  }, []);
 
   // ── Mouse handlers ──────────────────────────────────────────────────────────
   const handleMouseDown = useCallback(
@@ -60,6 +87,8 @@ export function DrawingCanvas({
   const handleClick = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
       if (e.button !== 0) return; // only left-click draws
+      if (activePan) return; // pan mode swallows clicks
+
       const raw = svgPoint(e);
       const p = { x: snap(raw.x), y: snap(raw.y) };
 
@@ -86,10 +115,10 @@ export function DrawingCanvas({
         startLabel({ x: snap(raw.x), y: snap(raw.y) });
       }
     },
-    [mode, wallStart, walls, doors, onWallsChange, onDoorsChange, startLabel]
+    [mode, activePan, wallStart, walls, doors, onWallsChange, onDoorsChange, startLabel]
   );
 
-  function handleModeChange(next: 'wall' | 'door' | 'text') {
+  function handleModeChange(next: DrawMode) {
     setMode(next);
     setWallStart(null);
     cancelLabel();
@@ -109,6 +138,18 @@ export function DrawingCanvas({
     if (bounds) exportPng(svgRef.current, bounds);
   }
 
+  function handleExportSvg() {
+    if (!svgRef.current) return;
+    const bounds = computeContentBounds(walls, doors, labels, result);
+    if (bounds) exportSvg(svgRef.current, bounds);
+  }
+
+  const canvasCursor = isPanning
+    ? 'cursor-grabbing'
+    : activePan
+      ? 'cursor-grab'
+      : 'cursor-crosshair';
+
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
@@ -120,13 +161,16 @@ export function DrawingCanvas({
         />
         <ZoomControls
           zoom={zoom}
+          panActive={mode === 'pan'}
           exportDisabled={
             walls.length === 0 && doors.length === 0 && labels.length === 0 && !result
           }
           onZoomIn={() => adjustZoom(zoom * 1.25)}
           onZoomOut={() => adjustZoom(zoom * 0.8)}
           onReset={resetView}
+          onTogglePan={() => handleModeChange(mode === 'pan' ? 'wall' : 'pan')}
           onExport={handleExport}
+          onExportSvg={handleExportSvg}
         />
       </div>
 
@@ -135,7 +179,7 @@ export function DrawingCanvas({
         width={CANVAS_W}
         height={CANVAS_H}
         viewBox={viewBox}
-        className="rounded border border-border bg-white cursor-crosshair"
+        className={`rounded border border-border bg-white ${canvasCursor}`}
         onClick={handleClick}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -159,9 +203,19 @@ export function DrawingCanvas({
           />
         ))}
 
+        <WallMeasurements
+          walls={walls}
+          unit={unit}
+          preview={
+            mode === 'wall' && !activePan && wallStart && hover
+              ? { x1: wallStart.x, y1: wallStart.y, x2: hover.x, y2: hover.y }
+              : null
+          }
+        />
+
         {wallStart && <circle cx={wallStart.x} cy={wallStart.y} r={4} fill="#3b82f6" />}
 
-        {mode === 'wall' && wallStart && hover && (
+        {mode === 'wall' && !activePan && wallStart && hover && (
           <line
             x1={wallStart.x}
             y1={wallStart.y}

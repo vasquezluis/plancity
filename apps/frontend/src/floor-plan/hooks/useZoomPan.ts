@@ -6,7 +6,7 @@ const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
 
 export type ZoomPanHandlers = {
-  /** Call on SVG onMouseDown to start a middle-mouse pan. */
+  /** Call on SVG onMouseDown to start a middle-mouse or left-drag pan. */
   onMouseDown: (e: React.MouseEvent<SVGSVGElement>) => void;
   /**
    * Call on SVG onMouseMove.
@@ -24,6 +24,8 @@ export type UseZoomPanReturn = {
   zoom: number;
   pan: Point;
   viewBox: string;
+  /** True while a drag-pan gesture is actively in progress (use for grabbing cursor). */
+  isPanning: boolean;
   adjustZoom: (next: number) => void;
   resetView: () => void;
   panHandlers: ZoomPanHandlers;
@@ -32,11 +34,16 @@ export type UseZoomPanReturn = {
 /**
  * Manages zoom and pan state for an SVG canvas.
  * Attaches a non-passive wheel listener for scroll-to-zoom (cursor-anchored).
- * Middle-mouse-button drag is exposed via panHandlers.
+ * Middle-mouse-button drag always pans. Left-button drag pans when panModeActive is true.
  */
-export function useZoomPan(svgRef: React.RefObject<SVGSVGElement | null>): UseZoomPanReturn {
+export function useZoomPan(
+  svgRef: React.RefObject<SVGSVGElement | null>,
+  /** When true, left-click drag also pans (e.g. hand tool or space key held). */
+  panModeActive = false
+): UseZoomPanReturn {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState<Point>({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
 
   // Refs let the wheel handler read current state without re-registering
   const zoomRef = useRef(zoom);
@@ -48,6 +55,15 @@ export function useZoomPan(svgRef: React.RefObject<SVGSVGElement | null>): UseZo
   const panStartRef = useRef<{ mouse: Point; pan: Point } | null>(null);
 
   const viewBox = `${pan.x} ${pan.y} ${CANVAS_W / zoom} ${CANVAS_H / zoom}`;
+
+  // Reset in-progress pan when pan mode is deactivated (e.g. Space released mid-drag)
+  useEffect(() => {
+    if (!panModeActive) {
+      isPanningRef.current = false;
+      panStartRef.current = null;
+      setIsPanning(false);
+    }
+  }, [panModeActive]);
 
   /** Zoom toward the canvas center, clamped to [MIN_ZOOM, MAX_ZOOM]. */
   function adjustZoom(next: number) {
@@ -104,12 +120,15 @@ export function useZoomPan(svgRef: React.RefObject<SVGSVGElement | null>): UseZo
 
   const onMouseDown = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
-      if (e.button !== 1) return;
+      const isMiddle = e.button === 1;
+      const isLeftPan = e.button === 0 && panModeActive;
+      if (!isMiddle && !isLeftPan) return;
       e.preventDefault();
       isPanningRef.current = true;
+      setIsPanning(true);
       panStartRef.current = { mouse: { x: e.clientX, y: e.clientY }, pan: { ...pan } };
     },
-    [pan]
+    [pan, panModeActive]
   );
 
   const onMouseMove = useCallback(
@@ -124,22 +143,30 @@ export function useZoomPan(svgRef: React.RefObject<SVGSVGElement | null>): UseZo
     [zoom]
   );
 
-  const onMouseUp = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
-    if (e.button === 1) {
-      isPanningRef.current = false;
-      panStartRef.current = null;
-    }
-  }, []);
+  const onMouseUp = useCallback(
+    (e: React.MouseEvent<SVGSVGElement>) => {
+      const isMiddle = e.button === 1;
+      const isLeftPan = e.button === 0 && panModeActive;
+      if (isMiddle || isLeftPan) {
+        isPanningRef.current = false;
+        panStartRef.current = null;
+        setIsPanning(false);
+      }
+    },
+    [panModeActive]
+  );
 
   const onMouseLeave = useCallback(() => {
     isPanningRef.current = false;
     panStartRef.current = null;
+    setIsPanning(false);
   }, []);
 
   return {
     zoom,
     pan,
     viewBox,
+    isPanning,
     adjustZoom,
     resetView,
     panHandlers: { onMouseDown, onMouseMove, onMouseUp, onMouseLeave },

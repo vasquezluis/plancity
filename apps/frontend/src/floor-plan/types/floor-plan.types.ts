@@ -1,6 +1,6 @@
 import type { Door, GenerateResponse, Label, Wall } from '../../types';
 
-export type DrawMode = 'wall' | 'door' | 'text';
+export type DrawMode = 'wall' | 'door' | 'text' | 'pan';
 
 export type DrawingCanvasProps = {
   walls: Wall[];

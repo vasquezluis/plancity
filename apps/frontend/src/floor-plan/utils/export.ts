@@ -59,6 +59,28 @@ export function computeContentBounds(
 }
 
 /**
+ * Serializes the SVG content area directly and triggers a .svg file download.
+ * Faster than PNG export because no canvas rasterization is needed.
+ */
+export function exportSvg(svg: SVGSVGElement, bounds: Bounds): void {
+  const clone = svg.cloneNode(true) as SVGSVGElement;
+  clone.setAttribute('viewBox', `${bounds.x} ${bounds.y} ${bounds.w} ${bounds.h}`);
+  clone.setAttribute('width', String(bounds.w));
+  clone.setAttribute('height', String(bounds.h));
+  clone.style.background = 'white';
+  for (const fo of Array.from(clone.querySelectorAll('foreignObject'))) fo.remove();
+
+  const svgStr = new XMLSerializer().serializeToString(clone);
+  const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'floor-plan.svg';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/**
  * Renders the content bounding box as a 2× PNG and triggers a file download.
  * Any in-progress foreignObject inputs are stripped from the clone before export.
  */

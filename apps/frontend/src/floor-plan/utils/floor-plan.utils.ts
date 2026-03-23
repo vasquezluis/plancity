@@ -1,4 +1,4 @@
-import type { Point, Wall } from '../../types';
+import type { Point, Wall, Wire } from '../../types';
 
 export const CANVAS_W = 1200;
 export const CANVAS_H = 800;
@@ -40,6 +40,22 @@ export function svgPoint(e: React.MouseEvent<SVGSVGElement>): Point {
   // Reason: fallback for environments where getScreenCTM is unavailable (e.g. tests)
   const rect = svg.getBoundingClientRect();
   return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+/**
+ * Sums the Euclidean length of all wire polylines and returns a formatted distance string.
+ * Reason: wires are A* paths with right-angle segments, so summing consecutive-point distances is exact.
+ */
+export function computeWireLength(wires: Wire[], unit: Unit): string {
+  let totalPx = 0;
+  for (const wire of wires) {
+    for (let i = 1; i < wire.length; i++) {
+      const dx = wire[i].x - wire[i - 1].x;
+      const dy = wire[i].y - wire[i - 1].y;
+      totalPx += Math.hypot(dx, dy);
+    }
+  }
+  return toDisplay(totalPx, unit);
 }
 
 /** Project point P onto wall segment AB; return projected point and distance to P. */

@@ -17,6 +17,7 @@ const HINTS: Record<DrawMode, { active: string; idle: string }> = {
     idle: '🚪 Click near a wall to place door',
   },
   text: { active: '✏️ Type and press Enter to confirm', idle: '🔤 Click to place a label' },
+  pan: { active: '✋ Drag to pan — or hold Space', idle: '✋ Drag to pan — or hold Space' },
 };
 
 export function DrawingToolbar({ mode, wallStarted, onModeChange, onClear }: Props) {
