@@ -18,6 +18,7 @@ Use this file to understand order, scope, and references.
 - 09-development-phases.md → Milestones
 - 10-demo-script.md → Final demo
 - 11-3d-viewer-plan.md → Extra (3D viewer plan)
+- 13-spotlight-tutorial-tour.md → How to use the app
 
 ## Phases Order (Follow Strictly)
 
