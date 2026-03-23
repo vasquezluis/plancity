@@ -59,7 +59,7 @@ describe('exportSvg', () => {
     vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
       if (tag === 'a') {
         const a = origCreate('a');
-        a.click = clickSpy;
+        a.click = clickSpy as unknown as () => void;
         return a;
       }
       return origCreate(tag);

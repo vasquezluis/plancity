@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Sparkles, Trash2, Zap } from 'lucide-react';
+import { AlertCircle, Box, Sparkles, Trash2, Zap } from 'lucide-react';
 import { useState } from 'react';
 import type { GenerateResponse, Label } from '../types';
 import { postAiAnalysis } from './api/ai.api';
@@ -27,6 +27,7 @@ export function FloorPlanEditor() {
 
   const [unit, setUnit] = useState<Unit>('m');
   const [labels, setLabels] = useState<Label[]>([]);
+  const [show3D, setShow3D] = useState(false);
 
   // AI-optimized layout — replaces `result` on the canvas when set
   const [aiResult, setAiResult] = useState<GenerateResponse | null>(null);
@@ -124,6 +125,7 @@ export function FloorPlanEditor() {
         labels={labels}
         result={displayResult}
         unit={unit}
+        show3D={show3D}
         onWallsChange={handleWallsChange}
         onDoorsChange={handleDoorsChange}
         onLabelsChange={setLabels}
@@ -177,6 +179,16 @@ export function FloorPlanEditor() {
           >
             <Sparkles className="w-4 h-4" />
             {aiPending ? 'Optimizing…' : 'Optimize with AI'}
+          </Button>
+        )}
+        {walls.length > 0 && (
+          <Button
+            className="cursor-pointer"
+            variant={show3D ? 'default' : 'outline'}
+            onClick={() => setShow3D((v) => !v)}
+          >
+            <Box className="w-4 h-4" />
+            {show3D ? '2D View' : '3D View'}
           </Button>
         )}
       </div>
