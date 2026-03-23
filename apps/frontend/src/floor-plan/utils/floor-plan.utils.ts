@@ -1,7 +1,7 @@
 import type { Point, Wall, Wire } from '../../types';
 
-export const CANVAS_W = 1200;
-export const CANVAS_H = 800;
+export const CANVAS_W = 1000;
+export const CANVAS_H = 600;
 export const GRID = 40; // px per grid cell — 1 cell = 1 meter
 export const METERS_PER_CELL = 1; // scale: each grid cell represents 1 m
 export const FEET_PER_METER = 3.281;
