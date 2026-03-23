@@ -19,6 +19,7 @@ import { LayerToggles } from './LayerToggles';
 import { LayoutOverlay } from './LayoutOverlay';
 import { WallMeasurements } from './WallMeasurements';
 import { ZoomControls } from './ZoomControls';
+import { ThreeDViewer } from './viewer3d/ThreeDViewer';
 
 export function DrawingCanvas({
   walls,
@@ -26,6 +27,7 @@ export function DrawingCanvas({
   labels,
   result,
   unit,
+  show3D = false,
   onWallsChange,
   onDoorsChange,
   onLabelsChange,
@@ -163,129 +165,141 @@ export function DrawingCanvas({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
-        <DrawingToolbar
-          mode={mode}
-          wallStarted={wallStart !== null}
-          onModeChange={handleModeChange}
-          onClear={handleClear}
+      {show3D ? (
+        <ThreeDViewer
+          walls={walls}
+          doors={doors}
+          result={result}
+          width={CANVAS_W}
+          height={CANVAS_H}
         />
-        <ZoomControls
-          zoom={zoom}
-          panActive={mode === 'pan'}
-          exportDisabled={
-            walls.length === 0 && doors.length === 0 && labels.length === 0 && !result
-          }
-          onZoomIn={() => adjustZoom(zoom * 1.25)}
-          onZoomOut={() => adjustZoom(zoom * 0.8)}
-          onReset={resetView}
-          onTogglePan={() => handleModeChange(mode === 'pan' ? 'wall' : 'pan')}
-          onExport={handleExport}
-          onExportSvg={handleExportSvg}
-        />
-      </div>
-
-      <svg
-        ref={svgRef}
-        width={CANVAS_W}
-        height={CANVAS_H}
-        viewBox={viewBox}
-        className={`rounded border border-border bg-white ${canvasCursor}`}
-        onClick={handleClick}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
-        onKeyUp={() => {}}
-      >
-        <title>Interactive drawing canvas for floor plans</title>
-        <CanvasGrid unit={unit} />
-
-        {visibility.walls &&
-          walls.map((w) => (
-            <line
-              key={`${w.x1}-${w.y1}-${w.x2}-${w.y2}`}
-              x1={w.x1}
-              y1={w.y1}
-              x2={w.x2}
-              y2={w.y2}
-              stroke="#1f2937"
-              strokeWidth={3}
-              strokeLinecap="round"
+      ) : (
+        <>
+          <div className="flex items-center justify-between mb-2">
+            <DrawingToolbar
+              mode={mode}
+              wallStarted={wallStart !== null}
+              onModeChange={handleModeChange}
+              onClear={handleClear}
             />
-          ))}
+            <ZoomControls
+              zoom={zoom}
+              panActive={mode === 'pan'}
+              exportDisabled={
+                walls.length === 0 && doors.length === 0 && labels.length === 0 && !result
+              }
+              onZoomIn={() => adjustZoom(zoom * 1.25)}
+              onZoomOut={() => adjustZoom(zoom * 0.8)}
+              onReset={resetView}
+              onTogglePan={() => handleModeChange(mode === 'pan' ? 'wall' : 'pan')}
+              onExport={handleExport}
+              onExportSvg={handleExportSvg}
+            />
+          </div>
 
-        {visibility.measurements && (
-          <WallMeasurements
-            walls={walls}
-            unit={unit}
-            preview={
-              mode === 'wall' && !activePan && wallStart && hover
-                ? { x1: wallStart.x, y1: wallStart.y, x2: hover.x, y2: hover.y }
-                : null
-            }
-          />
-        )}
+          <svg
+            ref={svgRef}
+            width={CANVAS_W}
+            height={CANVAS_H}
+            viewBox={viewBox}
+            className={`rounded border border-border bg-white ${canvasCursor}`}
+            onClick={handleClick}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
+            onKeyUp={() => {}}
+          >
+            <title>Interactive drawing canvas for floor plans</title>
+            <CanvasGrid unit={unit} />
 
-        {wallStart && <circle cx={wallStart.x} cy={wallStart.y} r={4} fill="#3b82f6" />}
+            {visibility.walls &&
+              walls.map((w) => (
+                <line
+                  key={`${w.x1}-${w.y1}-${w.x2}-${w.y2}`}
+                  x1={w.x1}
+                  y1={w.y1}
+                  x2={w.x2}
+                  y2={w.y2}
+                  stroke="#1f2937"
+                  strokeWidth={3}
+                  strokeLinecap="round"
+                />
+              ))}
 
-        {mode === 'wall' && !activePan && wallStart && hover && (
-          <line
-            x1={wallStart.x}
-            y1={wallStart.y}
-            x2={hover.x}
-            y2={hover.y}
-            stroke="#93c5fd"
-            strokeWidth={2}
-            strokeDasharray="6 4"
-          />
-        )}
+            {visibility.measurements && (
+              <WallMeasurements
+                walls={walls}
+                unit={unit}
+                preview={
+                  mode === 'wall' && !activePan && wallStart && hover
+                    ? { x1: wallStart.x, y1: wallStart.y, x2: hover.x, y2: hover.y }
+                    : null
+                }
+              />
+            )}
 
-        {visibility.doors && doors.map((d) => <DoorSymbol key={`${d.x}-${d.y}`} door={d} />)}
+            {wallStart && <circle cx={wallStart.x} cy={wallStart.y} r={4} fill="#3b82f6" />}
 
-        {visibility.labels &&
-          labels.map((label) => (
-            <text
-              key={`label-${label.x},${label.y}-${label.text}`}
-              x={label.x}
-              y={label.y}
-              fontSize={13}
-              fontWeight="600"
-              fill="#6b21a8"
-              stroke="white"
-              strokeWidth={3}
-              paintOrder="stroke"
-              style={{ userSelect: 'none', pointerEvents: 'none' }}
-            >
-              {label.text}
-            </text>
-          ))}
+            {mode === 'wall' && !activePan && wallStart && hover && (
+              <line
+                x1={wallStart.x}
+                y1={wallStart.y}
+                x2={hover.x}
+                y2={hover.y}
+                stroke="#93c5fd"
+                strokeWidth={2}
+                strokeDasharray="6 4"
+              />
+            )}
 
-        {pendingLabel && (
-          <LabelInput
-            x={pendingLabel.x}
-            y={pendingLabel.y}
-            value={labelText}
-            onChange={setLabelText}
-            onConfirm={confirmLabel}
-            onCancel={cancelLabel}
-          />
-        )}
+            {visibility.doors && doors.map((d) => <DoorSymbol key={`${d.x}-${d.y}`} door={d} />)}
 
-        {result && (
-          <LayoutOverlay
-            result={result}
-            showWires={visibility.wires}
-            showOutlets={visibility.outlets}
-            showSwitches={visibility.switches}
-            showPanel={visibility.panel}
-          />
-        )}
-      </svg>
+            {visibility.labels &&
+              labels.map((label) => (
+                <text
+                  key={`label-${label.x},${label.y}-${label.text}`}
+                  x={label.x}
+                  y={label.y}
+                  fontSize={13}
+                  fontWeight="600"
+                  fill="#6b21a8"
+                  stroke="white"
+                  strokeWidth={3}
+                  paintOrder="stroke"
+                  style={{ userSelect: 'none', pointerEvents: 'none' }}
+                >
+                  {label.text}
+                </text>
+              ))}
 
-      <LayerToggles visibility={visibility} hasResult={!!result} onChange={toggleLayer} />
+            {pendingLabel && (
+              <LabelInput
+                x={pendingLabel.x}
+                y={pendingLabel.y}
+                value={labelText}
+                onChange={setLabelText}
+                onConfirm={confirmLabel}
+                onCancel={cancelLabel}
+              />
+            )}
 
-      <CanvasFooter hover={hover} unit={unit} result={result} />
+            {result && (
+              <LayoutOverlay
+                result={result}
+                showWires={visibility.wires}
+                showOutlets={visibility.outlets}
+                showSwitches={visibility.switches}
+                showPanel={visibility.panel}
+              />
+            )}
+          </svg>
+
+          <LayerToggles visibility={visibility} hasResult={!!result} onChange={toggleLayer} />
+
+          <CanvasFooter hover={hover} unit={unit} result={result} />
+        </>
+      )}
     </div>
   );
 }

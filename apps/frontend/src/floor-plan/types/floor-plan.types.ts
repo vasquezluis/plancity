@@ -30,6 +30,7 @@ export type DrawingCanvasProps = {
   labels: Label[];
   result: GenerateResponse | null;
   unit: import('../utils/floor-plan.utils').Unit;
+  show3D?: boolean;
   onWallsChange: (walls: Wall[]) => void;
   onDoorsChange: (doors: Door[]) => void;
   onLabelsChange: (labels: Label[]) => void;

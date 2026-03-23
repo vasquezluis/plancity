@@ -17,6 +17,7 @@ Use this file to understand order, scope, and references.
 - 08-ai-integration.md → AI enhancements
 - 09-development-phases.md → Milestones
 - 10-demo-script.md → Final demo
+- 11-3d-viewer-plan.md → Extra (3D viewer plan)
 
 ## Phases Order (Follow Strictly)
 
