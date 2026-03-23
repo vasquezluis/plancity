@@ -29,7 +29,7 @@
 - Metrics (wire length)
 - SVG export
 
-## Phase 5 (Optional)
+## [✅] Phase 5 (Optional)
 
 - 3D rendering
 

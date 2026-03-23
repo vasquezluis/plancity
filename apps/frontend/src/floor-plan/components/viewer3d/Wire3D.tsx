@@ -4,8 +4,8 @@ import { to3DPosition } from '../../utils/coordinates3d';
 
 type Props = { wire: Wire };
 
-// Elevation: 1.0m — mid-wall height, clearly visible through semi-transparent walls
-const WIRE_ELEVATION = 1.0;
+// Elevation: 0.6m — matches outlet height so wires visually connect to outlets
+const WIRE_ELEVATION = 0.6;
 
 export function Wire3D({ wire }: Props) {
   if (wire.length < 2) return null;
