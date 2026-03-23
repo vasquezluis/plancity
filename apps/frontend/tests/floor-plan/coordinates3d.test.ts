@@ -20,9 +20,9 @@ describe('to3DPosition', () => {
     expect(x).toBeCloseTo(3);
   });
 
-  it('negates SVG y axis into Three.js z (SVG y-down → Three.js z-forward)', () => {
+  it('maps SVG y axis directly to Three.js +z (SVG y-down → Three.js +z)', () => {
     const [, , z] = to3DPosition(0, GRID * 2);
-    expect(z).toBeCloseTo(-2);
+    expect(z).toBeCloseTo(2);
   });
 
   it('applies elevation to the Three.js y axis', () => {

@@ -28,7 +28,7 @@ function useRoomCenter(walls: Wall[]): [number, number, number] {
     const xs = walls.flatMap((w) => [w.x1, w.x2]);
     const ys = walls.flatMap((w) => [w.y1, w.y2]);
     const cx = (Math.min(...xs) + Math.max(...xs)) / 2 / GRID;
-    const cz = -((Math.min(...ys) + Math.max(...ys)) / 2) / GRID;
+    const cz = (Math.min(...ys) + Math.max(...ys)) / 2 / GRID;
     return [cx, 0, cz];
   }, [walls]);
 }
@@ -36,10 +36,13 @@ function useRoomCenter(walls: Wall[]): [number, number, number] {
 export function ThreeDViewer({ walls, doors, result, width, height }: Props) {
   const [cx, , cz] = useRoomCenter(walls);
 
-  // Position camera above and to the front-right of the room center
-  const camX = cx + 12;
-  const camY = 10;
-  const camZ = cz + 12;
+  // Reason: camera must sit on the same x as the room center and only offset along +z.
+  // A diagonal offset (camX = cx+12, camZ = cz+12) puts the camera at 45° where the z-axis
+  // (SVG y-down → Three.js -z) projects into the left/right screen direction, rotating
+  // the layout 90°. A pure z-offset keeps z pointing down the screen and x pointing right.
+  const camX = cx;
+  const camY = 12;
+  const camZ = cz + 15;
 
   return (
     <div
@@ -49,7 +52,7 @@ export function ThreeDViewer({ walls, doors, result, width, height }: Props) {
     >
       <Canvas camera={{ position: [camX, camY, camZ], fov: 45 }} gl={{ antialias: true }}>
         <ambientLight intensity={0.6} />
-        <directionalLight position={[cx + 10, 20, cz + 10]} intensity={1} castShadow />
+        <directionalLight position={[cx + 5, 20, cz + 10]} intensity={1} castShadow />
         {/* Reason: target room center so the view is properly oriented regardless of where the user drew the walls */}
         <OrbitControls makeDefault target={[cx, 0, cz]} />
         <Walls3D walls={walls} />

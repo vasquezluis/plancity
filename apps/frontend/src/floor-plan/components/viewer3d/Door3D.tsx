@@ -39,16 +39,23 @@ export function Door3D({ door, walls }: Props) {
   const { position, rotationY } = useMemo(() => {
     const host = findHostWall(door, walls);
     const posX = door.x / GRID;
-    const posZ = -(door.y / GRID);
+    const posZ = door.y / GRID;
     const posY = DOOR_HEIGHT_M / 2;
 
-    if (!host) return { position: [posX, posY, posZ] as [number, number, number], rotationY: 0 };
+    if (!host)
+      return {
+        position: [posX, posY, posZ] as [number, number, number],
+        rotationY: 0,
+      };
 
     const dx = host.x2 - host.x1;
     const dy = host.y2 - host.y1;
-    // Reason: rotate the door frame to match the wall's direction in 3D
-    const rotY = -Math.atan2(dy, dx);
-    return { position: [posX, posY, posZ] as [number, number, number], rotationY: rotY };
+    // Reason: SVG y maps to +z directly (no negation), so angle is atan2(dy, dx) unchanged.
+    const rotY = Math.atan2(dy, dx);
+    return {
+      position: [posX, posY, posZ] as [number, number, number],
+      rotationY: rotY,
+    };
   }, [door, walls]);
 
   const frameColor = '#92400e'; // warm brown — door frame
@@ -76,10 +83,12 @@ export function Door3D({ door, walls }: Props) {
         <meshStandardMaterial color="#b45309" transparent opacity={0.3} />
       </mesh>
       {/* Gap fill — cover the wall behind the door with a dark void */}
-      <mesh position={[0, 0, 0]}>
-        <boxGeometry args={[DOOR_WIDTH_M - 0.02, DOOR_HEIGHT_M - 0.02, WALL_HEIGHT_M]} />
+      {/* <mesh position={[0, 0, 0]}>
+        <boxGeometry
+          args={[DOOR_WIDTH_M - 0.02, DOOR_HEIGHT_M - 0.02, WALL_HEIGHT_M]}
+        />
         <meshStandardMaterial color="#0f172a" transparent opacity={0.8} />
-      </mesh>
+      </mesh> */}
     </group>
   );
 }

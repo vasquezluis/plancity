@@ -17,7 +17,7 @@ export function Floor3D({ walls }: Props) {
     const maxY = Math.max(...ys);
     return {
       cx: (minX + maxX) / 2 / GRID,
-      cz: -((minY + maxY) / 2) / GRID,
+      cz: (minY + maxY) / 2 / GRID,
       width: (maxX - minX) / GRID + 4, // +4m padding
       depth: (maxY - minY) / GRID + 4,
     };
