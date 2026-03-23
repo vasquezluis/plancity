@@ -1,5 +1,7 @@
-import { DoorOpen, PenLine, Zap } from 'lucide-react';
+import { DoorOpen, HelpCircle, PenLine, Zap } from 'lucide-react';
 import ThemeSwitcher from './components/ThemeSwitcher';
+import { TutorialModal } from './floor-plan-tutorial/components/TutorialModal';
+import { useTutorial } from './floor-plan-tutorial/hooks/useTutorial';
 import { FloorPlanEditor } from './floor-plan/FloorPlanEditor';
 
 const HOW_TO_STEPS = [
@@ -27,8 +29,11 @@ const HOW_TO_STEPS = [
 ];
 
 export function App() {
+  const tutorial = useTutorial();
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
+      <TutorialModal isOpen={tutorial.isOpen} onClose={tutorial.close} />
       {/* Header — full-width, sticky at top */}
       <header className="sticky top-0 z-10 w-full border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div className="mx-auto max-w-7xl px-6 py-3 flex items-center justify-between">
@@ -39,7 +44,18 @@ export function App() {
               <p className="text-xs text-muted-foreground">Auto Electrical Wiring Planner</p>
             </div>
           </div>
-          <ThemeSwitcher />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={tutorial.open}
+              className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+              aria-label="Open tutorial"
+              title="How to use PlanCity"
+            >
+              <HelpCircle className="w-4 h-4" />
+            </button>
+            <ThemeSwitcher />
+          </div>
         </div>
       </header>
 
