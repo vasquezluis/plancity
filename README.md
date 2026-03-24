@@ -1,8 +1,10 @@
 # PlanCity
 
-**Auto Electrical Wiring Planner**
+**Quick Wiring Sketch Tool**
 
-A tool that lets users sketch a floor plan, then automatically places outlets and routes wiring.
+A lightweight tool for sketching a rough electrical wiring plan before working with a licensed electrician. Draw walls and doors, hit Generate, and get a suggested outlet placement and wire route in seconds.
+
+> **Not a replacement for professional tools or a licensed electrician.** PlanCity is meant for quick ideation and communication — not code-compliant electrical design.
 
 ## Stack
 

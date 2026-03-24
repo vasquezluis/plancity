@@ -24,7 +24,7 @@ const HOW_TO_STEPS = [
     step: '3',
     title: 'Generate wiring',
     description:
-      'Hit the Generate button. PlanCity will automatically place outlets along the walls, route wires, and overlay the electrical plan on your drawing.',
+      'Hit the Generate button. PlanCity will suggest outlet placements and a rough wire route as a starting point — adjust as needed before sharing with your electrician.',
   },
 ];
 
@@ -41,7 +41,7 @@ export function App() {
             <Zap className="w-5 h-5 text-amber-500" />
             <div>
               <h1 className="text-lg font-semibold tracking-tight leading-none">PlanCity</h1>
-              <p className="text-xs text-muted-foreground">Auto Electrical Wiring Planner</p>
+              <p className="text-xs text-muted-foreground">Quick Wiring Sketch Tool</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -63,12 +63,17 @@ export function App() {
         {/* About section */}
         <section className="text-center max-w-2xl mx-auto space-y-3">
           <h2 className="text-2xl font-bold tracking-tight">
-            From blueprint sketch to electrical layout — in seconds
+            Rough out your wiring plan before calling the electrician
           </h2>
           <p className="text-muted-foreground leading-relaxed">
-            PlanCity is an interactive floor-plan editor that automatically generates an electrical
-            wiring plan from your drawing. Sketch walls and doors, click <strong>Generate</strong>,
-            and instantly see outlet placements and wire routing overlaid on your blueprint.
+            PlanCity helps you sketch a quick electrical layout so you can walk into a conversation
+            with your electrician already knowing where you want outlets, switches, and wires. Draw
+            walls and doors, click <strong>Generate</strong>, and get a rough wiring plan in
+            seconds.
+          </p>
+          <p className="text-xs text-muted-foreground/70">
+            Not a substitute for a licensed electrician or professional CAD software — just a fast
+            way to sketch your ideas.
           </p>
         </section>
 
@@ -106,13 +111,13 @@ export function App() {
       {/* Footer */}
       <footer className="w-full border-t border-border">
         <div className="mx-auto max-w-7xl px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} PlanCity — Auto Electrical Wiring Planner</p>
+          <p>&copy; {new Date().getFullYear()} PlanCity — Quick Wiring Sketch Tool</p>
           <div className="flex items-center gap-4">
             <span className="inline-flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
               Phase 1 — MVP
             </span>
-            <span>Draw &rarr; Generate &rarr; Visualize</span>
+            <span>Sketch &rarr; Generate &rarr; Share with your electrician</span>
           </div>
         </div>
       </footer>
