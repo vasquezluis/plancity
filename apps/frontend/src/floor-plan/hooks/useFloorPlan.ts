@@ -1,59 +1,41 @@
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import type { Door, GenerateResponse, Wall } from '../../types';
-import { postPlan } from '../api/floor-plan.api';
-import type { PlanResponse, RateLimitInfo } from '../types/floor-plan.types';
-
-const DEFAULT_RATE_LIMIT: RateLimitInfo = { limit: 3, remaining: 3, resetAt: 0 };
+import { type RateLimitedError, postPlan } from '../api/floor-plan.api';
 
 export function useFloorPlan() {
   const [walls, setWalls] = useState<Wall[]>([]);
   const [doors, setDoors] = useState<Door[]>([]);
-  const [rateLimit, setRateLimit] = useState<RateLimitInfo>(DEFAULT_RATE_LIMIT);
-  // Seconds until rate limit window resets (only when remaining === 0)
-  const [retryIn, setRetryIn] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [isRateLimited, setIsRateLimited] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Countdown ticker when the user is rate-limited
-  useEffect(() => {
-    if (rateLimit.remaining > 0 || rateLimit.resetAt === 0) {
-      setRetryIn(0);
-      if (timerRef.current) clearInterval(timerRef.current);
-      return;
-    }
-
-    const tick = () => {
-      const secs = Math.max(0, rateLimit.resetAt - Math.floor(Date.now() / 1000));
-      setRetryIn(secs);
-      if (secs === 0) {
-        if (timerRef.current) clearInterval(timerRef.current);
-        // Optimistically restore remaining count so the button re-enables
-        setRateLimit((prev) => ({ ...prev, remaining: prev.limit }));
-      }
-    };
-
-    tick();
-    timerRef.current = setInterval(tick, 1000);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [rateLimit.remaining, rateLimit.resetAt]);
+  // Clear the timer on unmount
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    },
+    []
+  );
 
   const {
     mutate,
-    data: planResponse,
+    data: result,
     isPending,
     error,
     reset,
-  } = useMutation<PlanResponse, Error, { walls: Wall[]; doors: Door[] }>({
+  } = useMutation<GenerateResponse, Error, { walls: Wall[]; doors: Door[] }>({
     mutationFn: postPlan,
-    onSuccess: (res) => {
-      setRateLimit(res.rateLimit);
-    },
     onError: (err) => {
-      // Preserve rate limit info if it was attached to the error (429 case)
-      const rl = (err as Error & { rateLimit?: RateLimitInfo }).rateLimit;
-      if (rl) setRateLimit(rl);
+      const retryAfter = (err as RateLimitedError).retryAfter;
+      if (retryAfter == null) return;
+      // Reason: on 429, disable the button on the frontend for the duration the backend
+      // reports, instead of parsing rate-limit response headers which vary by draft version.
+      setIsRateLimited(true);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        setIsRateLimited(false);
+        reset();
+      }, retryAfter * 1000);
     },
   });
 
@@ -79,16 +61,13 @@ export function useFloorPlan() {
     reset();
   }
 
-  const result: GenerateResponse | null = planResponse?.data ?? null;
-
   return {
     walls,
     doors,
-    result,
+    result: result ?? null,
     isPending,
     error,
-    rateLimit,
-    retryIn,
+    isRateLimited,
     handleGenerate,
     handleClear,
     handleWallsChange,

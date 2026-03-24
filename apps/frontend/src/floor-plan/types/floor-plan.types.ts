@@ -35,14 +35,3 @@ export type DrawingCanvasProps = {
   onDoorsChange: (doors: Door[]) => void;
   onLabelsChange: (labels: Label[]) => void;
 };
-
-export type RateLimitInfo = {
-  limit: number;
-  remaining: number;
-  resetAt: number; // Unix seconds
-};
-
-export type PlanResponse = {
-  data: GenerateResponse;
-  rateLimit: RateLimitInfo;
-};

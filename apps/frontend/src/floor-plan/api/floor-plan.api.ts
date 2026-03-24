@@ -1,37 +1,26 @@
 import type { FloorPlanInput, GenerateResponse } from '../../types';
-import type { PlanResponse, RateLimitInfo } from '../types/floor-plan.types';
 
-function parseRateLimit(headers: Headers): RateLimitInfo {
-  return {
-    limit: Number(headers.get('X-RateLimit-Limit') ?? 3),
-    remaining: Number(headers.get('X-RateLimit-Remaining') ?? 0),
-    resetAt: Number(headers.get('X-RateLimit-Reset') ?? 0),
-  };
-}
+export type RateLimitedError = Error & { retryAfter: number };
 
-export async function postPlan(input: FloorPlanInput): Promise<PlanResponse> {
+export async function postPlan(input: FloorPlanInput): Promise<GenerateResponse> {
   const res = await fetch('/api/plan', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
 
-  const rateLimit = parseRateLimit(res.headers);
-
   if (res.status === 429) {
-    const body = (await res.json().catch(() => ({}))) as { error?: string; retryAfter?: number };
-    const err = new Error(body.error ?? 'Rate limit exceeded') as Error & {
-      rateLimit: RateLimitInfo;
-    };
-    err.rateLimit = rateLimit;
+    // defined on the backend. This avoids parsing the complex draft-8 RateLimit headers.
+    const retryAfter = Number(res.headers.get('Retry-After') ?? 60);
+    const err = new Error('Rate limit exceeded') as RateLimitedError;
+    err.retryAfter = retryAfter;
     throw err;
   }
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error((err as { error?: string }).error ?? `Server error ${res.status}`);
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error ?? `Server error ${res.status}`);
   }
 
-  const data = (await res.json()) as GenerateResponse;
-  return { data, rateLimit };
+  return res.json() as Promise<GenerateResponse>;
 }
