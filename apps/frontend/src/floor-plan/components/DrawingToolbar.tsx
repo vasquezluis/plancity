@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { DoorOpen, PenLine, Trash2, Type } from 'lucide-react';
+import { DoorOpen, Eraser, PenLine, Trash2, Type } from 'lucide-react';
 import type { DrawMode } from '../types/floor-plan.types';
 
 type Props = {
@@ -18,6 +18,10 @@ const HINTS: Record<DrawMode, { active: string; idle: string }> = {
   },
   text: { active: '✏️ Type and press Enter to confirm', idle: '🔤 Click to place a label' },
   pan: { active: '✋ Drag to pan — or hold Space', idle: '✋ Drag to pan — or hold Space' },
+  delete: {
+    active: '🗑 Click a wall or door to delete it',
+    idle: '🗑 Click a wall or door to delete it',
+  },
 };
 
 export function DrawingToolbar({ mode, wallStarted, onModeChange, onClear }: Props) {
@@ -53,6 +57,16 @@ export function DrawingToolbar({ mode, wallStarted, onModeChange, onClear }: Pro
       >
         <Type className="w-4 h-4" />
         Label
+      </Button>
+
+      <Button
+        size="sm"
+        className="cursor-pointer"
+        variant={mode === 'delete' ? 'destructive' : 'outline'}
+        onClick={() => onModeChange('delete')}
+      >
+        <Eraser className="w-4 h-4" />
+        Delete
       </Button>
 
       <Button className="cursor-pointer" size="sm" variant="destructive" onClick={onClear}>

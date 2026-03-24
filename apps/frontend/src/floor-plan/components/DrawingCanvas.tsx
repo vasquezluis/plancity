@@ -38,6 +38,10 @@ export function DrawingCanvas({
   // True while the Space key is held — temporarily activates pan regardless of mode
   const [tempPan, setTempPan] = useState(false);
   const [visibility, setVisibility] = useState<LayerVisibility>(DEFAULT_VISIBILITY);
+  // Index of the wall/door/label closest to the cursor while in delete mode
+  const [deleteHoverWall, setDeleteHoverWall] = useState<number | null>(null);
+  const [deleteHoverDoor, setDeleteHoverDoor] = useState<number | null>(null);
+  const [deleteHoverLabel, setDeleteHoverLabel] = useState<number | null>(null);
 
   function toggleLayer(key: keyof LayerVisibility, value: boolean) {
     setVisibility((prev) => ({ ...prev, [key]: value }));
@@ -83,8 +87,57 @@ export function DrawingCanvas({
       if (panHandlers.onMouseMove(e)) return; // pan consumed the event
       const p = svgPoint(e);
       setHover({ x: snap(p.x), y: snap(p.y) });
+
+      if (mode === 'delete') {
+        // Find the wall closest to the cursor
+        const DELETE_THRESHOLD = 12;
+        let closestWall: number | null = null;
+        let closestWallDist = Number.POSITIVE_INFINITY;
+        for (let i = 0; i < walls.length; i++) {
+          const { dist } = projectOntoWall(p, walls[i]);
+          if (dist < closestWallDist) {
+            closestWallDist = dist;
+            closestWall = i;
+          }
+        }
+        setDeleteHoverWall(
+          closestWall !== null && closestWallDist <= DELETE_THRESHOLD ? closestWall : null
+        );
+
+        // Find the door closest to the cursor
+        let closestDoor: number | null = null;
+        let closestDoorDist = Number.POSITIVE_INFINITY;
+        for (let i = 0; i < doors.length; i++) {
+          const dist = Math.hypot(p.x - doors[i].x, p.y - doors[i].y);
+          if (dist < closestDoorDist) {
+            closestDoorDist = dist;
+            closestDoor = i;
+          }
+        }
+        setDeleteHoverDoor(
+          closestDoor !== null && closestDoorDist <= DELETE_THRESHOLD * 3 ? closestDoor : null
+        );
+
+        // Find the label closest to the cursor
+        let closestLabel: number | null = null;
+        let closestLabelDist = Number.POSITIVE_INFINITY;
+        for (let i = 0; i < labels.length; i++) {
+          const dist = Math.hypot(p.x - labels[i].x, p.y - labels[i].y);
+          if (dist < closestLabelDist) {
+            closestLabelDist = dist;
+            closestLabel = i;
+          }
+        }
+        setDeleteHoverLabel(
+          closestLabel !== null && closestLabelDist <= DELETE_THRESHOLD * 3 ? closestLabel : null
+        );
+      } else {
+        setDeleteHoverWall(null);
+        setDeleteHoverDoor(null);
+        setDeleteHoverLabel(null);
+      }
     },
-    [panHandlers]
+    [panHandlers, mode, walls, doors, labels]
   );
 
   const handleMouseUp = useCallback(
@@ -104,6 +157,53 @@ export function DrawingCanvas({
 
       const raw = svgPoint(e);
       const p = { x: snap(raw.x), y: snap(raw.y) };
+
+      if (mode === 'delete') {
+        // Reason: check labels first (pure text points), then doors (sit on walls), then walls
+        const DELETE_THRESHOLD = 12;
+
+        let closestLabel: number | null = null;
+        let closestLabelDist = Number.POSITIVE_INFINITY;
+        for (let i = 0; i < labels.length; i++) {
+          const dist = Math.hypot(raw.x - labels[i].x, raw.y - labels[i].y);
+          if (dist < closestLabelDist) {
+            closestLabelDist = dist;
+            closestLabel = i;
+          }
+        }
+        if (closestLabel !== null && closestLabelDist <= DELETE_THRESHOLD * 3) {
+          onLabelsChange(labels.filter((_, i) => i !== closestLabel));
+          return;
+        }
+
+        let closestDoor: number | null = null;
+        let closestDoorDist = Number.POSITIVE_INFINITY;
+        for (let i = 0; i < doors.length; i++) {
+          const dist = Math.hypot(raw.x - doors[i].x, raw.y - doors[i].y);
+          if (dist < closestDoorDist) {
+            closestDoorDist = dist;
+            closestDoor = i;
+          }
+        }
+        if (closestDoor !== null && closestDoorDist <= DELETE_THRESHOLD * 3) {
+          onDoorsChange(doors.filter((_, i) => i !== closestDoor));
+          return;
+        }
+
+        let closestWall: number | null = null;
+        let closestWallDist = Number.POSITIVE_INFINITY;
+        for (let i = 0; i < walls.length; i++) {
+          const { dist } = projectOntoWall(raw, walls[i]);
+          if (dist < closestWallDist) {
+            closestWallDist = dist;
+            closestWall = i;
+          }
+        }
+        if (closestWall !== null && closestWallDist <= DELETE_THRESHOLD) {
+          onWallsChange(walls.filter((_, i) => i !== closestWall));
+        }
+        return;
+      }
 
       if (mode === 'wall') {
         if (!wallStart) {
@@ -128,13 +228,27 @@ export function DrawingCanvas({
         startLabel({ x: snap(raw.x), y: snap(raw.y) });
       }
     },
-    [mode, activePan, wallStart, walls, doors, onWallsChange, onDoorsChange, startLabel]
+    [
+      mode,
+      activePan,
+      wallStart,
+      walls,
+      doors,
+      labels,
+      onWallsChange,
+      onDoorsChange,
+      onLabelsChange,
+      startLabel,
+    ]
   );
 
   function handleModeChange(next: DrawMode) {
     setMode(next);
     setWallStart(null);
     cancelLabel();
+    setDeleteHoverWall(null);
+    setDeleteHoverDoor(null);
+    setDeleteHoverLabel(null);
   }
 
   function handleClear() {
@@ -161,7 +275,9 @@ export function DrawingCanvas({
     ? 'cursor-grabbing'
     : activePan
       ? 'cursor-grab'
-      : 'cursor-crosshair';
+      : mode === 'delete'
+        ? 'cursor-pointer'
+        : 'cursor-crosshair';
 
   return (
     <div>
@@ -214,15 +330,15 @@ export function DrawingCanvas({
             <CanvasGrid unit={unit} />
 
             {visibility.walls &&
-              walls.map((w) => (
+              walls.map((w, i) => (
                 <line
                   key={`${w.x1}-${w.y1}-${w.x2}-${w.y2}`}
                   x1={w.x1}
                   y1={w.y1}
                   x2={w.x2}
                   y2={w.y2}
-                  stroke="#1f2937"
-                  strokeWidth={3}
+                  stroke={mode === 'delete' && deleteHoverWall === i ? '#ef4444' : '#1f2937'}
+                  strokeWidth={mode === 'delete' && deleteHoverWall === i ? 5 : 3}
                   strokeLinecap="round"
                 />
               ))}
@@ -253,17 +369,24 @@ export function DrawingCanvas({
               />
             )}
 
-            {visibility.doors && doors.map((d) => <DoorSymbol key={`${d.x}-${d.y}`} door={d} />)}
+            {visibility.doors &&
+              doors.map((d, i) => (
+                <DoorSymbol
+                  key={`${d.x}-${d.y}`}
+                  door={d}
+                  highlight={mode === 'delete' && deleteHoverDoor === i}
+                />
+              ))}
 
             {visibility.labels &&
-              labels.map((label) => (
+              labels.map((label, i) => (
                 <text
                   key={`label-${label.x},${label.y}-${label.text}`}
                   x={label.x}
                   y={label.y}
                   fontSize={13}
                   fontWeight="600"
-                  fill="#6b21a8"
+                  fill={mode === 'delete' && deleteHoverLabel === i ? '#ef4444' : '#6b21a8'}
                   stroke="white"
                   strokeWidth={3}
                   paintOrder="stroke"
