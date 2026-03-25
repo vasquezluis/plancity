@@ -12,8 +12,8 @@ ENV HUSKY=0
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY apps/backend/package.json ./apps/backend/package.json
 
-# Install all deps (including devDeps needed for tsc)
-RUN pnpm install --frozen-lockfile
+# Install all deps — ignore scripts to skip husky prepare hook
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy backend source and build
 COPY apps/backend/tsconfig.json ./apps/backend/tsconfig.json
@@ -35,8 +35,8 @@ ENV HUSKY=0
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/backend/package.json ./apps/backend/package.json
 
-# Install production dependencies only
-RUN pnpm install --frozen-lockfile --prod
+# Install production dependencies only — ignore scripts to skip husky prepare hook
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
 # Copy compiled output from builder
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
