@@ -8,8 +8,8 @@ export default defineConfig(({ mode }) => {
   // Load .env from the monorepo root (two levels up from apps/frontend)
   const env = loadEnv(mode, '../../', '');
 
-  const backendPort = env.PORT ?? '3001';
-  const frontendPort = Number(env.FRONTEND_PORT ?? '3000');
+  const backendPort = env.PORT ?? '3000';
+  const frontendPort = Number(env.FRONTEND_PORT ?? '5173');
 
   return {
     plugins: [react(), tailwindcss()],

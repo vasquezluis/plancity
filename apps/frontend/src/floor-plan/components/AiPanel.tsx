@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react';
+import { AlertCircle, Sparkles } from 'lucide-react';
 
 type Props = {
   changes: string[] | null;
@@ -20,7 +20,15 @@ export function AiPanel({ changes, explanation, isPending, error }: Props) {
   }
 
   if (error) {
-    return <p className="mt-2 text-sm text-destructive">AI error: {error}</p>;
+    return (
+      <div className="mt-3 p-3 rounded-md border border-destructive/30 bg-destructive/5 flex items-start gap-2">
+        <AlertCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+        <div>
+          <p className="text-sm font-medium text-destructive">AI optimization failed</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{error}</p>
+        </div>
+      </div>
+    );
   }
 
   if (!changes) return null;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   GRID,
+  computeWireLength,
   projectOntoWall,
   snap,
   toDisplay,
@@ -41,6 +42,53 @@ describe('toDisplay', () => {
   it('returns "0" for zero pixels', () => {
     expect(toDisplay(0, 'm')).toBe('0');
     expect(toDisplay(0, 'ft')).toBe('0.0');
+  });
+});
+
+describe('computeWireLength', () => {
+  it('returns total length for a single straight wire in meters', () => {
+    // Wire goes 2 grid cells right = 80px = 2m
+    const wires = [
+      [
+        { x: 0, y: 0 },
+        { x: 80, y: 0 },
+      ],
+    ];
+    expect(computeWireLength(wires, 'm')).toBe('2');
+  });
+
+  it('accumulates length across multiple wires', () => {
+    // Two wires of 1 grid cell each = 80px = 2m total
+    const wires = [
+      [
+        { x: 0, y: 0 },
+        { x: 40, y: 0 },
+      ],
+      [
+        { x: 100, y: 0 },
+        { x: 140, y: 0 },
+      ],
+    ];
+    expect(computeWireLength(wires, 'm')).toBe('2');
+  });
+
+  it('converts total length to feet', () => {
+    // 1 grid cell = 1m = 3.281ft → "3.3"
+    const wires = [
+      [
+        { x: 0, y: 0 },
+        { x: 40, y: 0 },
+      ],
+    ];
+    expect(computeWireLength(wires, 'ft')).toBe('3.3');
+  });
+
+  it('returns "0" for empty wires array', () => {
+    expect(computeWireLength([], 'm')).toBe('0');
+  });
+
+  it('returns "0" for a wire with a single point (no segments)', () => {
+    expect(computeWireLength([[{ x: 40, y: 40 }]], 'm')).toBe('0');
   });
 });
 

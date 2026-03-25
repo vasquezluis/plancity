@@ -24,12 +24,12 @@
 - AI integration
 - Layout improvements
 
-## Phase 4
+## [✅] Phase 4
 
 - Metrics (wire length)
 - SVG export
 
-## Phase 5 (Optional)
+## [✅] Phase 5 (Optional)
 
 - 3D rendering
 

@@ -1,13 +1,14 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Timer, Trash2, Zap } from 'lucide-react';
+import { AlertCircle, Box, Sparkles, Trash2, Zap } from 'lucide-react';
 import { useState } from 'react';
 import type { GenerateResponse, Label } from '../types';
 import { postAiAnalysis } from './api/ai.api';
 import { AiPanel } from './components/AiPanel';
 import { DrawingCanvas } from './components/DrawingCanvas';
+import { RateLimitBanner } from './components/RateLimitBanner';
 import { useFloorPlan } from './hooks/useFloorPlan';
-import type { Unit } from './utils/floor-plan.utils';
+import { type Unit, computeWireLength } from './utils/floor-plan.utils';
 
 export function FloorPlanEditor() {
   const {
@@ -16,8 +17,7 @@ export function FloorPlanEditor() {
     result,
     isPending,
     error,
-    rateLimit,
-    retryIn,
+    isRateLimited,
     handleGenerate: _handleGenerate,
     handleClear: _handleClear,
     handleWallsChange,
@@ -26,6 +26,7 @@ export function FloorPlanEditor() {
 
   const [unit, setUnit] = useState<Unit>('m');
   const [labels, setLabels] = useState<Label[]>([]);
+  const [show3D, setShow3D] = useState(false);
 
   // AI-optimized layout — replaces `result` on the canvas when set
   const [aiResult, setAiResult] = useState<GenerateResponse | null>(null);
@@ -73,7 +74,6 @@ export function FloorPlanEditor() {
     }
   }
 
-  const isRateLimited = rateLimit.remaining === 0 && retryIn > 0;
   // Show AI-optimized layout when available, otherwise show the generated one
   const displayResult = aiResult ?? result;
 
@@ -98,23 +98,7 @@ export function FloorPlanEditor() {
           </button>
         </div>
 
-        {/* Rate limit indicator */}
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <span>
-            {rateLimit.remaining}/{rateLimit.limit} requests left
-          </span>
-          {/* Dots visualising remaining uses */}
-          <div className="flex gap-0.5 ml-1">
-            {Array.from({ length: rateLimit.limit }).map((_, i) => (
-              <span
-                // Reason: index is stable here — limit is a fixed constant (3)
-                // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length constant array
-                key={i}
-                className={`w-2 h-2 rounded-full ${i < rateLimit.remaining ? 'bg-green-500' : 'bg-muted'}`}
-              />
-            ))}
-          </div>
-        </div>
+        <span className="text-xs text-foreground">5 req / min</span>
       </div>
 
       <DrawingCanvas
@@ -123,6 +107,7 @@ export function FloorPlanEditor() {
         labels={labels}
         result={displayResult}
         unit={unit}
+        show3D={show3D}
         onWallsChange={handleWallsChange}
         onDoorsChange={handleDoorsChange}
         onLabelsChange={setLabels}
@@ -144,6 +129,9 @@ export function FloorPlanEditor() {
             </Badge>
             <Badge className="bg-amber-500 text-white">
               {displayResult.wires.length} wire{displayResult.wires.length !== 1 ? 's' : ''}
+            </Badge>
+            <Badge variant="outline">
+              {computeWireLength(displayResult.wires, unit)} {unit} total wire
             </Badge>
             {aiResult && <Badge className="bg-purple-500 text-white">AI optimized</Badge>}
           </>
@@ -175,18 +163,28 @@ export function FloorPlanEditor() {
             {aiPending ? 'Optimizing…' : 'Optimize with AI'}
           </Button>
         )}
+        {walls.length > 0 && (
+          <Button
+            className="cursor-pointer"
+            variant={show3D ? 'default' : 'outline'}
+            onClick={() => setShow3D((v) => !v)}
+          >
+            <Box className="w-4 h-4" />
+            {show3D ? '2D View' : '3D View'}
+          </Button>
+        )}
       </div>
 
-      {/* Rate limit warning */}
-      {isRateLimited && (
-        <p className="mt-2 text-sm text-amber-600 flex items-center gap-1">
-          <Timer className="w-4 h-4" />
-          Rate limit reached. Try again in {retryIn}s.
-        </p>
-      )}
+      {isRateLimited && <RateLimitBanner />}
 
       {error && !isRateLimited && (
-        <p className="mt-2 text-sm text-destructive">Error: {error.message}</p>
+        <div className="mt-3 p-3 rounded-md border border-destructive/30 bg-destructive/5 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-destructive">Generation failed</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{error.message}</p>
+          </div>
+        </div>
       )}
 
       <AiPanel

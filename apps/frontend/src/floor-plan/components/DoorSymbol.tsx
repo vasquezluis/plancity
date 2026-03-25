@@ -1,14 +1,17 @@
 import type { Door } from '../../types';
 
-type Props = { door: Door };
+type Props = { door: Door; highlight?: boolean };
 
 /**
  * Architectural top-down door symbol centered at the placement point.
  * Hinge at (-10, 0), panel swings 90° upward, arc shows the sweep area.
  */
-export function DoorSymbol({ door }: Props) {
+export function DoorSymbol({ door, highlight = false }: Props) {
   return (
     <g key={`${door.x}-${door.y}`} transform={`translate(${door.x}, ${door.y})`}>
+      {highlight && (
+        <circle cx={0} cy={-10} r={18} fill="none" stroke="#ef4444" strokeWidth={2} opacity={0.8} />
+      )}
       {/* Swing area fill */}
       <path d="M -10 0 L -10 -20 A 20 20 0 0 1 10 0 Z" fill="#fef3c7" opacity={0.55} />
       {/* Swing arc (dashed) */}
