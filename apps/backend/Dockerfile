@@ -1,0 +1,43 @@
+# ---- Build stage ----
+FROM node:22-alpine AS builder
+
+RUN npm install -g pnpm
+
+WORKDIR /app
+
+# Copy workspace manifests first for layer caching
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY apps/backend/package.json ./apps/backend/package.json
+
+# Install all deps (including devDeps needed for tsc)
+RUN pnpm install --frozen-lockfile
+
+# Copy backend source and build
+COPY apps/backend/tsconfig.json ./apps/backend/tsconfig.json
+COPY apps/backend/src ./apps/backend/src
+
+RUN pnpm --filter @cubepath/backend build
+
+# ---- Production stage ----
+FROM node:22-alpine AS production
+
+RUN npm install -g pnpm
+
+WORKDIR /app
+
+# Copy workspace manifests for production install
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/backend/package.json ./apps/backend/package.json
+
+# Install production dependencies only
+RUN pnpm install --frozen-lockfile --prod
+
+# Copy compiled output from builder
+COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
+
+WORKDIR /app/apps/backend
+
+ENV NODE_ENV=production
+EXPOSE 3000
+
+CMD ["node", "dist/index.js"]

@@ -1,0 +1,12 @@
+node_modules
+apps/*/node_modules
+apps/*/dist
+apps/*/.env
+**/.env.local
+**/.env.development
+**/.env.production
+.git
+.gitignore
+*.md
+docs/
+skills-lock.json
