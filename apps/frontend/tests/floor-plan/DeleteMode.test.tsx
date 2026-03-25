@@ -63,6 +63,6 @@ describe('DrawingToolbar — delete mode', () => {
     const { getByText } = render(
       <DrawingToolbar mode="delete" wallStarted={false} onModeChange={vi.fn()} onClear={vi.fn()} />
     );
-    expect(getByText('🗑 Click a wall or door to delete it')).toBeTruthy();
+    expect(getByText('Click a wall or door to delete it')).toBeTruthy();
   });
 });

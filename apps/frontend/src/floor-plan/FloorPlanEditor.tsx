@@ -28,7 +28,6 @@ export function FloorPlanEditor() {
   const [labels, setLabels] = useState<Label[]>([]);
   const [show3D, setShow3D] = useState(false);
 
-  // AI-optimized layout — replaces `result` on the canvas when set
   const [aiResult, setAiResult] = useState<GenerateResponse | null>(null);
   const [aiChanges, setAiChanges] = useState<string[] | null>(null);
   const [aiExplanation, setAiExplanation] = useState<string | null>(null);
@@ -74,31 +73,39 @@ export function FloorPlanEditor() {
     }
   }
 
-  // Show AI-optimized layout when available, otherwise show the generated one
   const displayResult = aiResult ?? result;
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-1">
+    <div className="space-y-4">
+      {/* Toolbar header row */}
+      <div className="flex items-center justify-between">
         {/* Unit toggle */}
-        <div className="flex items-center rounded-md border border-border overflow-hidden text-xs font-medium">
+        <div className="flex items-center rounded-lg border border-border overflow-hidden text-xs font-semibold bg-muted/40">
           <button
             type="button"
-            className={`px-3 py-1 cursor-pointer transition-colors ${unit === 'm' ? 'bg-foreground text-background' : 'hover:bg-muted'}`}
+            className={`px-3 py-1.5 cursor-pointer transition-colors ${
+              unit === 'm'
+                ? 'bg-foreground text-background'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
             onClick={() => setUnit('m')}
           >
-            m
+            Meters
           </button>
           <button
             type="button"
-            className={`px-3 py-1 cursor-pointer transition-colors ${unit === 'ft' ? 'bg-foreground text-background' : 'hover:bg-muted'}`}
+            className={`px-3 py-1.5 cursor-pointer transition-colors ${
+              unit === 'ft'
+                ? 'bg-foreground text-background'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
             onClick={() => setUnit('ft')}
           >
-            ft
+            Feet
           </button>
         </div>
 
-        <span className="text-xs text-foreground">5 req / min</span>
+        <span className="text-xs text-muted-foreground">5 requests / min</span>
       </div>
 
       <DrawingCanvas
@@ -113,48 +120,60 @@ export function FloorPlanEditor() {
         onLabelsChange={setLabels}
       />
 
-      {/* Stats */}
-      <div className="flex items-center gap-3 mt-3 flex-wrap">
-        <Badge variant="outline">
+      {/* Stats row */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Badge variant="outline" className="text-xs rounded-full">
           {walls.length} wall{walls.length !== 1 ? 's' : ''}
         </Badge>
-        <Badge variant="outline">
+        <Badge variant="outline" className="text-xs rounded-full">
           {doors.length} door{doors.length !== 1 ? 's' : ''}
         </Badge>
         {displayResult && (
           <>
-            <Badge className="bg-blue-500 text-white">
-              {displayResult.outlets.length} outlet
-              {displayResult.outlets.length !== 1 ? 's' : ''}
+            <Badge className="text-xs rounded-full bg-blue-500 text-white border-0">
+              {displayResult.outlets.length} outlet{displayResult.outlets.length !== 1 ? 's' : ''}
             </Badge>
-            <Badge className="bg-amber-500 text-white">
+            <Badge
+              className="text-xs rounded-full border-0 text-white"
+              style={{ backgroundColor: 'var(--brand)' }}
+            >
               {displayResult.wires.length} wire{displayResult.wires.length !== 1 ? 's' : ''}
             </Badge>
-            <Badge variant="outline">
-              {computeWireLength(displayResult.wires, unit)} {unit} total wire
+            <Badge variant="outline" className="text-xs rounded-full">
+              {computeWireLength(displayResult.wires, unit)} {unit} wire total
             </Badge>
-            {aiResult && <Badge className="bg-purple-500 text-white">AI optimized</Badge>}
+            {aiResult && (
+              <Badge className="text-xs rounded-full bg-violet-500 text-white border-0">
+                AI optimized
+              </Badge>
+            )}
           </>
         )}
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-2 mt-3">
+      {/* Action buttons */}
+      <div className="flex items-center gap-2 flex-wrap">
         <Button
-          className="cursor-pointer"
+          className="cursor-pointer gap-2 rounded-lg text-sm font-semibold"
           onClick={handleGenerate}
           disabled={walls.length === 0 || isPending || isRateLimited}
         >
           <Zap className="w-4 h-4" />
           {isPending ? 'Generating…' : 'Generate'}
         </Button>
-        <Button className="cursor-pointer" variant="outline" onClick={handleClear}>
+
+        <Button
+          className="cursor-pointer gap-2 rounded-lg text-sm"
+          variant="outline"
+          onClick={handleClear}
+        >
           <Trash2 className="w-4 h-4" />
           Clear All
         </Button>
+
         {result && (
           <Button
-            className="cursor-pointer"
+            className="cursor-pointer gap-2 rounded-lg text-sm"
             variant="outline"
             onClick={handleAiAnalyze}
             disabled={aiPending || isRateLimited}
@@ -163,9 +182,10 @@ export function FloorPlanEditor() {
             {aiPending ? 'Optimizing…' : 'Optimize with AI'}
           </Button>
         )}
+
         {walls.length > 0 && (
           <Button
-            className="cursor-pointer"
+            className="cursor-pointer gap-2 rounded-lg text-sm"
             variant={show3D ? 'default' : 'outline'}
             onClick={() => setShow3D((v) => !v)}
           >
@@ -178,10 +198,10 @@ export function FloorPlanEditor() {
       {isRateLimited && <RateLimitBanner />}
 
       {error && !isRateLimited && (
-        <div className="mt-3 p-3 rounded-md border border-destructive/30 bg-destructive/5 flex items-start gap-2">
+        <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 flex items-start gap-2">
           <AlertCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
           <div>
-            <p className="text-sm font-medium text-destructive">Generation failed</p>
+            <p className="text-sm font-semibold text-destructive">Generation failed</p>
             <p className="text-xs text-muted-foreground mt-0.5">{error.message}</p>
           </div>
         </div>

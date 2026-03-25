@@ -27,22 +27,44 @@ export function ZoomControls({
 }: Props) {
   return (
     <div className="flex items-center gap-1">
-      <Button size="sm" variant="outline" className="cursor-pointer px-2" onClick={onZoomIn}>
+      <Button
+        size="sm"
+        variant="outline"
+        className="cursor-pointer px-2 rounded-lg"
+        onClick={onZoomIn}
+        title="Zoom in"
+      >
         <ZoomIn className="w-4 h-4" />
       </Button>
-      <span className="text-xs text-muted-foreground w-10 text-center tabular-nums">
+
+      <span className="text-xs text-muted-foreground w-11 text-center tabular-nums font-medium select-none">
         {Math.round(zoom * 100)}%
       </span>
-      <Button size="sm" variant="outline" className="cursor-pointer px-2" onClick={onZoomOut}>
+
+      <Button
+        size="sm"
+        variant="outline"
+        className="cursor-pointer px-2 rounded-lg"
+        onClick={onZoomOut}
+        title="Zoom out"
+      >
         <ZoomOut className="w-4 h-4" />
       </Button>
-      <Button size="sm" variant="outline" className="cursor-pointer px-2" onClick={onReset}>
+
+      <Button
+        size="sm"
+        variant="outline"
+        className="cursor-pointer px-2 rounded-lg"
+        onClick={onReset}
+        title="Reset view"
+      >
         <RotateCcw className="w-4 h-4" />
       </Button>
+
       <Button
         size="sm"
         variant={panActive ? 'default' : 'outline'}
-        className="cursor-pointer px-2"
+        className="cursor-pointer px-2 rounded-lg"
         title="Pan (or hold Space)"
         onClick={onTogglePan}
       >
@@ -54,17 +76,18 @@ export function ZoomControls({
       <Button
         size="sm"
         variant="outline"
-        className="cursor-pointer px-2"
+        className="cursor-pointer px-2 rounded-lg"
         title="Export as PNG"
         disabled={exportDisabled}
         onClick={onExport}
       >
         <ImageDown className="w-4 h-4" />
       </Button>
+
       <Button
         size="sm"
         variant="outline"
-        className="cursor-pointer px-2"
+        className="cursor-pointer px-2 rounded-lg"
         title="Export as SVG"
         disabled={exportDisabled}
         onClick={onExportSvg}
