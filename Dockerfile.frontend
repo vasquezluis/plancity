@@ -5,6 +5,9 @@ RUN npm install -g pnpm
 
 WORKDIR /app
 
+# Disable husky git hooks — not needed in Docker
+ENV HUSKY=0
+
 # Copy workspace manifests first for layer caching
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY apps/frontend/package.json ./apps/frontend/package.json
