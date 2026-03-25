@@ -28,6 +28,9 @@ RUN npm install -g pnpm
 
 WORKDIR /app
 
+# Disable husky — each FROM starts a fresh stage without inherited ENV
+ENV HUSKY=0
+
 # Copy workspace manifests for production install
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/backend/package.json ./apps/backend/package.json
