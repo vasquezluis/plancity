@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
 @import "tailwindcss";
 
 /* Enable dark mode via .dark class on <html> */
@@ -24,47 +25,57 @@
   --radius-lg: var(--radius);
 }
 
+/* ── Light theme ─────────────────────────────────────────────────────────── */
 :root {
   --radius: 0.5rem;
 
-  /* Light theme */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --background: oklch(0.985 0.003 60);       /* warm off-white */
+  --foreground: oklch(0.15 0.015 250);        /* near-black slate */
+  --card: oklch(1 0 0);                       /* pure white */
+  --card-foreground: oklch(0.15 0.015 250);
+  --primary: oklch(0.15 0.015 250);           /* slate primary */
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.96 0.006 60);
+  --secondary-foreground: oklch(0.25 0.015 250);
+  --muted: oklch(0.96 0.006 60);
+  --muted-foreground: oklch(0.52 0.02 250);
+  --accent: oklch(0.75 0.18 60);              /* amber */
+  --accent-foreground: oklch(0.15 0.015 250);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(0.9 0.008 250);
+  --ring: oklch(0.65 0.18 60);
+
+  /* Brand amber — used for highlights and the logo */
+  --brand: oklch(0.74 0.19 60);
+  --brand-light: oklch(0.96 0.06 80);
 }
 
+/* ── Dark theme ──────────────────────────────────────────────────────────── */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --ring: oklch(0.556 0 0);
+  --background: oklch(0.135 0.012 250);
+  --foreground: oklch(0.95 0.005 240);
+  --card: oklch(0.18 0.014 250);
+  --card-foreground: oklch(0.95 0.005 240);
+  --primary: oklch(0.95 0.005 240);
+  --primary-foreground: oklch(0.135 0.012 250);
+  --secondary: oklch(0.22 0.014 250);
+  --secondary-foreground: oklch(0.95 0.005 240);
+  --muted: oklch(0.22 0.014 250);
+  --muted-foreground: oklch(0.62 0.018 250);
+  --accent: oklch(0.72 0.18 60);
+  --accent-foreground: oklch(0.15 0 0);
+  --destructive: oklch(0.65 0.2 25);
+  --border: oklch(0.27 0.015 250);
+  --ring: oklch(0.72 0.18 60);
+
+  --brand: oklch(0.78 0.19 65);
+  --brand-light: oklch(0.25 0.06 65);
 }
 
+/* ── Base ────────────────────────────────────────────────────────────────── */
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }

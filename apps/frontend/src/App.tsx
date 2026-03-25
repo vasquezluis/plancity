@@ -6,25 +6,25 @@ import { FloorPlanEditor } from './floor-plan/FloorPlanEditor';
 
 const HOW_TO_STEPS = [
   {
-    icon: <PenLine className="w-5 h-5 text-amber-500" />,
-    step: '1',
-    title: 'Draw walls',
+    Icon: PenLine,
+    step: 1,
+    title: 'Draw your walls',
     description:
-      'Select the Wall tool and click on the canvas to place the start point, then click again to finish the wall segment. Repeat to outline your floor plan.',
+      'Select the Wall tool, click to place a start point, then click again to finish each wall segment. Repeat to trace your full floor plan.',
   },
   {
-    icon: <DoorOpen className="w-5 h-5 text-amber-500" />,
-    step: '2',
-    title: 'Add doors',
+    Icon: DoorOpen,
+    step: 2,
+    title: 'Place the doors',
     description:
-      'Switch to the Door tool and click near any wall to snap a door onto it. The arc shows the swing direction.',
+      'Switch to Door mode and click near any wall to snap a door onto it. The arc automatically shows the swing direction.',
   },
   {
-    icon: <Zap className="w-5 h-5 text-amber-500" />,
-    step: '3',
+    Icon: Zap,
+    step: 3,
     title: 'Generate wiring',
     description:
-      'Hit the Generate button. PlanCity will suggest outlet placements and a rough wire route as a starting point — adjust as needed before sharing with your electrician.',
+      'Click Generate and instantly get suggested outlet positions, switch placements, and a routed wire plan. Optionally enhance it with AI.',
   },
 ];
 
@@ -34,90 +34,139 @@ export function App() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <TutorialModal isOpen={tutorial.isOpen} onClose={tutorial.close} />
-      {/* Header — full-width, sticky at top */}
-      <header className="sticky top-0 z-10 w-full border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="mx-auto max-w-7xl px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-amber-500" />
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight leading-none">PlanCity</h1>
-              <p className="text-xs text-muted-foreground">Quick Wiring Sketch Tool</p>
+
+      {/* ── Header ────────────────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-10 w-full bg-card border-b border-border shadow-sm">
+        <div className="mx-auto max-w-6xl px-5 py-3 flex items-center justify-between">
+          {/* Brand */}
+          <div className="flex items-center gap-2.5">
+            <div
+              className="flex items-center justify-center w-8 h-8 rounded-lg"
+              style={{ backgroundColor: 'var(--brand)' }}
+            >
+              <Zap className="w-4 h-4 text-white" />
+            </div>
+            <div className="leading-tight">
+              <span className="block text-sm font-bold tracking-tight">PlanCity</span>
+              <span className="block text-[11px] text-muted-foreground font-medium">
+                Electrical Layout Tool
+              </span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+
+          {/* Right actions */}
+          <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={tutorial.open}
-              className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
               aria-label="Open tutorial"
-              title="How to use PlanCity"
             >
-              <HelpCircle className="w-4 h-4" />
+              <HelpCircle className="w-3.5 h-3.5" />
+              Tutorial
             </button>
             <ThemeSwitcher />
           </div>
         </div>
       </header>
 
-      <main className="flex-1 mx-auto w-full max-w-7xl px-6 py-8 space-y-10">
-        {/* About section */}
-        <section className="text-center max-w-2xl mx-auto space-y-3">
-          <h2 className="text-2xl font-bold tracking-tight">
-            Rough out your wiring plan before calling the electrician
-          </h2>
-          <p className="text-muted-foreground leading-relaxed">
-            PlanCity helps you sketch a quick electrical layout so you can walk into a conversation
-            with your electrician already knowing where you want outlets, switches, and wires. Draw
-            walls and doors, click <strong>Generate</strong>, and get a rough wiring plan in
-            seconds.
-          </p>
-          <p className="text-xs text-muted-foreground/70">
-            Not a substitute for a licensed electrician or professional CAD software — just a fast
-            way to sketch your ideas.
-          </p>
+      {/* ── Main ──────────────────────────────────────────────────────────── */}
+      <main className="flex-1 mx-auto w-full max-w-6xl px-5 py-10 space-y-10">
+        {/* Hero ─────────────────────────────────────────────────────────── */}
+        <section className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-2">
+          <div className="max-w-xl space-y-3">
+            <div
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold"
+              style={{
+                backgroundColor: 'var(--brand-light)',
+                color: 'var(--brand)',
+              }}
+            >
+              <Zap className="w-3 h-3" />
+              AI-powered electrical planning
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold leading-snug tracking-tight">
+              Sketch your electrical layout
+              <br />
+              <span style={{ color: 'var(--brand)' }}>before calling the electrician</span>
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Draw walls and doors, click{' '}
+              <strong className="text-foreground font-semibold">Generate</strong>, and get a
+              complete wiring plan with outlets, switches, and routed wires in seconds. Use AI to
+              optimize the layout further.
+            </p>
+          </div>
+
+          {/* Quick stats / badge cluster */}
+          <div className="flex flex-col gap-2 shrink-0">
+            {[
+              { label: 'Outlet placement', color: '#3b82f6' },
+              { label: 'Wire routing', color: 'var(--brand)' },
+              { label: 'AI optimization', color: '#8b5cf6' },
+              { label: '3D preview', color: '#10b981' },
+            ].map(({ label, color }) => (
+              <div key={label} className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: color }}
+                />
+                {label}
+              </div>
+            ))}
+          </div>
         </section>
 
-        {/* How-to steps */}
+        {/* How it works ─────────────────────────────────────────────────── */}
         <section>
-          <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground text-center mb-6">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-5">
             How it works
           </h3>
-          <ol className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {HOW_TO_STEPS.map(({ icon, step, title, description }) => (
-              <li
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {HOW_TO_STEPS.map(({ Icon, step, title, description }) => (
+              <div
                 key={step}
-                className="relative rounded-lg border border-border bg-card p-4 flex flex-col gap-3"
+                className="relative bg-card rounded-xl border border-border p-5 flex flex-col gap-3"
               >
-                {/* Step badge */}
-                <span className="absolute top-4 right-4 text-xs font-bold text-muted-foreground/40 select-none">
-                  {step} / 3
-                </span>
-                <div className="flex items-center gap-2">
-                  {icon}
-                  <span className="font-semibold text-sm">{title}</span>
+                {/* Step number */}
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
+                    style={{ backgroundColor: 'var(--brand)' }}
+                  >
+                    {step}
+                  </div>
+                  <Icon className="w-4 h-4 text-muted-foreground" />
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
-              </li>
+                <div>
+                  <p className="font-semibold text-sm mb-1">{title}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
+                </div>
+              </div>
             ))}
-          </ol>
+          </div>
         </section>
 
-        {/* Editor */}
-        <section className="flex items-center justify-center">
-          <FloorPlanEditor />
+        {/* Editor ───────────────────────────────────────────────────────── */}
+        <section>
+          <div className="bg-card flex justify-center rounded-xl border border-border p-5 shadow-sm">
+            <FloorPlanEditor />
+          </div>
         </section>
+
+        {/* Disclaimer */}
+        <p className="text-xs text-muted-foreground text-center pb-2">
+          Not a substitute for a licensed electrician or professional CAD software — this is a fast
+          way to sketch ideas before your consultation.
+        </p>
       </main>
 
-      {/* Footer */}
-      <footer className="w-full border-t border-border">
-        <div className="mx-auto max-w-7xl px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} PlanCity — Quick Wiring Sketch Tool</p>
+      {/* ── Footer ────────────────────────────────────────────────────────── */}
+      <footer className="w-full border-t border-border bg-card">
+        <div className="mx-auto max-w-6xl px-5 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
+          <p>PlanCity — Electrical Layout Tool</p>
           <div className="flex items-center gap-4">
-            <span className="inline-flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
-              Phase 1 — MVP
-            </span>
-            <span>Sketch &rarr; Generate &rarr; Share with your electrician</span>
+            <span>Sketch → Generate → Share</span>
           </div>
         </div>
       </footer>
