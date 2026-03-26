@@ -1,0 +1,32 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: ${PORT:-3000}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    expose:
+      # Only exposed to the internal Docker network, not to the host
+      - "3000"
+    networks:
+      - dokploy-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true
