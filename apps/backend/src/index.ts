@@ -6,7 +6,7 @@ import floorPlanRouter from './floor-plan/floor-plan.router.js';
 import { rateLimitMiddleware } from './middleware/rate-limit.js';
 
 const app = express();
-const PORT = process.env.PORT ?? 3000;
+const PORT = Number(process.env.PORT ?? 3000);
 
 const isDev = process.env.NODE_ENV !== 'production';
 const corsOrigin = process.env.CORS_ORIGIN;
@@ -37,6 +37,6 @@ app.use('/plan/ai', aiRouter);
 // Electrical layout generation — rate limited to 3 req/min
 app.use('/plan', floorPlanRouter);
 
-app.listen(PORT, () => {
-  console.log(`Backend running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Backend running on port ${PORT}`);
 });
