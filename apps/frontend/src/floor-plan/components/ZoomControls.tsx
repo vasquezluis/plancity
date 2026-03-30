@@ -31,10 +31,10 @@ export function ZoomControls({
         size="sm"
         variant="outline"
         className="cursor-pointer px-2 rounded-lg"
-        onClick={onZoomIn}
-        title="Zoom in"
+        onClick={onZoomOut}
+        title="Zoom out"
       >
-        <ZoomIn className="w-4 h-4" />
+        <ZoomOut className="w-4 h-4" />
       </Button>
 
       <span className="text-xs text-muted-foreground w-11 text-center tabular-nums font-medium select-none">
@@ -45,10 +45,10 @@ export function ZoomControls({
         size="sm"
         variant="outline"
         className="cursor-pointer px-2 rounded-lg"
-        onClick={onZoomOut}
-        title="Zoom out"
+        onClick={onZoomIn}
+        title="Zoom in"
       >
-        <ZoomOut className="w-4 h-4" />
+        <ZoomIn className="w-4 h-4" />
       </Button>
 
       <Button

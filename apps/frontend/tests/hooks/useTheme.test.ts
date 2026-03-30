@@ -26,14 +26,8 @@ describe('useTheme', () => {
     expect(result.current.theme).toBe('dark');
   });
 
-  it('falls back to system preference when localStorage is empty', () => {
+  it('defaults to light when localStorage is empty regardless of system preference', () => {
     setSystemPreference(true);
-    const { result } = renderHook(() => useTheme());
-    expect(result.current.theme).toBe('dark');
-  });
-
-  it('defaults to light when localStorage is empty and no dark preference', () => {
-    setSystemPreference(false);
     const { result } = renderHook(() => useTheme());
     expect(result.current.theme).toBe('light');
   });

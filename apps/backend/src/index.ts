@@ -32,10 +32,10 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-// AI layout analysis — must be registered before /plan to avoid prefix collision
-app.use('/plan/ai', aiRouter);
+// AI layout analysis — must be registered before /api/plan to avoid prefix collision
+app.use('/api/plan/ai', aiRouter);
 // Electrical layout generation — rate limited to 3 req/min
-app.use('/plan', floorPlanRouter);
+app.use('/api/plan', floorPlanRouter);
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Backend running on port ${PORT}`);
