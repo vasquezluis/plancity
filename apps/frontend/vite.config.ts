@@ -25,7 +25,6 @@ export default defineConfig(({ mode }) => {
       proxy: {
         '/api': {
           target: backendUrl,
-          rewrite: (path) => path.replace(/^\/api/, ''),
         },
       },
     },
